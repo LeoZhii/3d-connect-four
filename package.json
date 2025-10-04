@@ -1,0 +1,21 @@
+{
+  "name": "threejs-python-app",
+  "version": "1.0.0",
+  "description": "A simple Three.js application with Python Flask backend",
+  "main": "frontend/js/app.js",
+  "scripts": {
+    "start": "echo 'Please run the Python backend and open frontend/index.html'",
+    "dev": "echo 'Start Python backend: cd backend && python app.py'"
+  },
+  "keywords": [
+    "threejs",
+    "python",
+    "flask",
+    "3d",
+    "webgl"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}

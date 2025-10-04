@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Application</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            min-width: 250px;
+        }
+        
+        #ui-panel h2 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .control-group input, .control-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .control-group input[type="color"] {
+            height: 40px;
+            padding: 2px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 200px;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="loading">Loading Three.js Scene...</div>
+        <div id="canvas-container"></div>
+        
+        <div id="ui-panel">
+            <h2>🎮 Scene Controls</h2>
+            
+            <div class="control-group">
+                <label>Object Type:</label>
+                <select id="objectType">
+                    <option value="cube">Cube</option>
+                    <option value="sphere">Sphere</option>
+                    <option value="cone">Cone</option>
+                    <option value="cylinder">Cylinder</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Color:</label>
+                <input type="color" id="objectColor" value="#ff6b6b">
+            </div>
+            
+            <div class="control-group">
+                <label>Position X:</label>
+                <input type="range" id="posX" min="-10" max="10" value="0" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Position Y:</label>
+                <input type="range" id="posY" min="-10" max="10" value="0" step="0.1">
+            </div>
+            
+            <div class="control-group">
+                <label>Position Z:</label>
+                <input type="range" id="posZ" min="-10" max="10" value="0" step="0.1">
+            </div>
+            
+            <button onclick="addObject()">➕ Add Object</button>
+            <button onclick="clearScene()">🗑️ Clear Scene</button>
+            <button onclick="toggleWireframe()">🔲 Toggle Wireframe</button>
+        </div>
+        
+        <div id="info-panel">
+            <h3 style="margin-top: 0;">ℹ️ Info</h3>
+            <div>Objects: <span id="objectCount">0</span></div>
+            <div>FPS: <span id="fps">60</span></div>
+            <div>Camera: <span id="cameraPos">0,0,5</span></div>
+            <br>
+            <div><strong>Controls:</strong></div>
+            <div>🖱️ Left: Rotate</div>
+            <div>🖱️ Right: Pan</div>
+            <div>🖱️ Wheel: Zoom</div>
+        </div>
+    </div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- Our application script -->
+    <script src="js/app.js"></script>
+</body>
+</html>
