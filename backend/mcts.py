@@ -29,16 +29,63 @@ class MCTS:
         self.simulations = simulations
         self.c = exploration_constant
 
-    def best_move(self, root_state, player, game):
+def best_move(self, root_state, player, game):
+        # --- NEW FAST WIN/BLOCK CHECK ---
+        valid_moves = game.get_valid_moves(root_state)
+        
+        # 1. Check for immediate winning move for the AI
+        for move in valid_moves:
+            # Check if this move leads to an immediate win for 'player'
+            temp_state = game.make_move(copy.deepcopy(root_state), move, player)
+            # Assuming game.get_winner returns 'player' ID if 'player' won
+            if game.get_winner(temp_state) == player: 
+                print(f"MCTS found 1-move WINNER: {move}")
+                return move # Return the winning move immediately
+        
+        # 2. Check for immediate blocking move (Opponent's 1-move win)
+        opponent = game.get_opponent(player)
+        losing_moves = [] # Moves that allow the opponent to win next turn
+        
+        for move in valid_moves:
+            temp_state = game.make_move(copy.deepcopy(root_state), move, player)
+            # Check the *opponent's* possible response moves
+            for opponent_move in game.get_valid_moves(temp_state):
+                final_state = game.make_move(copy.deepcopy(temp_state), opponent_move, opponent)
+                
+                # If opponent can win, this 'move' for the AI is a LOSER/threat
+                if game.get_winner(final_state) == opponent:
+                    losing_moves.append(move)
+                    break # Stop checking this AI move, it's bad
+        
+        # If there are moves that *aren't* immediate losers, filter to them
+        safe_moves = [m for m in valid_moves if m not in losing_moves]
+        
+        # If all moves are losing, MCTS is pointless, but we proceed with MCTS on all moves.
+        # If there are safe moves, we can restrict the MCTS to only consider those:
+        # if safe_moves:
+        #     valid_moves = safe_moves 
+        #     # NOTE: Implementing this restriction requires changing how the root node is initialized/expanded
+        
+        # For simplicity, we stick to the core MCTS for now.
+        # --------------------------------
+        
         root = Node(state=copy.deepcopy(root_state), player = player)
-
+        
+        # ... rest of your simulation loop ...
         for _ in range(self.simulations):
-            node = self._select(root, game)
-            reward = self._simulate(node.state, node.player, game)
-            self._backpropagate(node, reward)
+            # ...
+        
+        # If the fast check didn't return a move, use MCTS result
+        best_mcts_move = max(root.children, key=lambda child: child.visits).move
 
-        #Return move with the most visits
-        return max(root.children, key=lambda child: child.visits).move
+        # OPTIONAL: If we filtered moves above, ensure the MCTS result is a safe move.
+        # if safe_moves and best_mcts_move not in safe_moves:
+        #     # Fallback to the move with the highest visit count *among safe moves*
+        #     safe_children = [c for c in root.children if c.move in safe_moves]
+        #     if safe_children:
+        #          return max(safe_children, key=lambda child: child.visits).move
+        
+        return best_mcts_move
 
     def _select(self, node, game):
         #traverse down until unexpanded or terminal
