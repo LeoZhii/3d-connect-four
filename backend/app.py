@@ -1,115 +1,61 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import numpy as np
 import json
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
-# Sample 3D object data
-sample_objects = [
-    {
-        "id": 1,
-        "type": "cube",
-        "position": {"x": 0, "y": 0, "z": 0},
-        "rotation": {"x": 0, "y": 0, "z": 0},
-        "scale": {"x": 1, "y": 1, "z": 1},
-        "color": "#ff6b6b"
-    },
-    {
-        "id": 2,
-        "type": "sphere",
-        "position": {"x": 3, "y": 0, "z": 0},
-        "rotation": {"x": 0, "y": 0, "z": 0},
-        "scale": {"x": 1, "y": 1, "z": 1},
-        "color": "#4ecdc4"
-    },
-    {
-        "id": 3,
-        "type": "cone",
-        "position": {"x": -3, "y": 0, "z": 0},
-        "rotation": {"x": 0, "y": 0, "z": 0},
-        "scale": {"x": 1, "y": 1, "z": 1},
-        "color": "#45b7d1"
+grid = np.zeros(4, 4, 5)
+turn = 1
+moves = []
+
+
+@app.route('/v1/api/players/<int:player_id>/moves', methods=['POST'])
+def record_player_move(player_id):
+    if player_id != 1 and player_id != 2:
+        return jsonify({'error': 'Invalid player_id'}), 400
+
+    body = request.body
+    if not body or 'coordinates_2d' not in body:
+        return jsonify({'error': 'Missing coordinates_2d in request body'}), 400
+
+    coordinates_2d = body.get('coordinates_2d')
+    x = coordinates_2d[0]
+    y = coordinates_2d[1]
+
+    if x is None or y is None:
+        return jsonify({'error': 'Missing x or y coordinate'}), 400
+
+    if not (0 <= x < 4 and 0 <= y < 4):
+        return jsonify({'error': 'Coordinates out of bounds (must be 0-3)'}), 400
+
+    column = grid[x, y, :]
+    empty_positions = np.where(column == 0)[0]
+    if len(empty_positions) == 0:
+        return jsonify({'error': 'Column is full'}), 400
+
+    z = empty_positions[0]
+    grid[x, y, z] = player_id
+
+    move = {
+        'player_id': player_id,
+        'turn': turn,
+        'coordinates': [x, y, z]
     }
-]
+    moves.append(move)
+    turn += 1
 
-@app.route('/api/objects', methods=['GET'])
-def get_objects():
-    """Get all 3D objects"""
-    return jsonify(sample_objects)
+    # TODO: Check for winner
 
-@app.route('/api/objects/<int:object_id>', methods=['GET'])
-def get_object(object_id):
-    """Get a specific 3D object by ID"""
-    obj = next((obj for obj in sample_objects if obj['id'] == object_id), None)
-    if obj:
-        return jsonify(obj)
-    return jsonify({"error": "Object not found"}), 404
-
-@app.route('/api/objects', methods=['POST'])
-def create_object():
-    """Create a new 3D object"""
-    data = request.get_json()
-    
-    # Generate new ID
-    new_id = max([obj['id'] for obj in sample_objects]) + 1 if sample_objects else 1
-    
-    new_object = {
-        "id": new_id,
-        "type": data.get('type', 'cube'),
-        "position": data.get('position', {"x": 0, "y": 0, "z": 0}),
-        "rotation": data.get('rotation', {"x": 0, "y": 0, "z": 0}),
-        "scale": data.get('scale', {"x": 1, "y": 1, "z": 1}),
-        "color": data.get('color', '#ffffff')
+    response = {
+        'coordinates': [x, y, z]
     }
-    
-    sample_objects.append(new_object)
-    return jsonify(new_object), 201
+    return jsonify(response), 201
 
-@app.route('/api/objects/<int:object_id>', methods=['PUT'])
-def update_object(object_id):
-    """Update a 3D object"""
-    obj = next((obj for obj in sample_objects if obj['id'] == object_id), None)
-    if not obj:
-        return jsonify({"error": "Object not found"}), 404
-    
-    data = request.get_json()
-    
-    # Update object properties
-    if 'type' in data:
-        obj['type'] = data['type']
-    if 'position' in data:
-        obj['position'].update(data['position'])
-    if 'rotation' in data:
-        obj['rotation'].update(data['rotation'])
-    if 'scale' in data:
-        obj['scale'].update(data['scale'])
-    if 'color' in data:
-        obj['color'] = data['color']
-    
-    return jsonify(obj)
-
-@app.route('/api/objects/<int:object_id>', methods=['DELETE'])
-def delete_object(object_id):
-    """Delete a 3D object"""
-    global sample_objects
-    sample_objects = [obj for obj in sample_objects if obj['id'] != object_id]
-    return jsonify({"message": "Object deleted successfully"})
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({"status": "healthy", "message": "Three.js Backend is running!"})
 
 if __name__ == '__main__':
     print("Starting Three.js Backend Server...")
-    print("API Endpoints:")
-    print("  GET    /api/objects - Get all objects")
-    print("  GET    /api/objects/<id> - Get specific object")
-    print("  POST   /api/objects - Create new object")
-    print("  PUT    /api/objects/<id> - Update object")
-    print("  DELETE /api/objects/<id> - Delete object")
-    print("  GET    /api/health - Health check")
     print("\nServer running at: http://localhost:5000")
-    
+
     app.run(debug=True, host='0.0.0.0', port=5000)
