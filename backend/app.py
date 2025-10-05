@@ -13,13 +13,21 @@ moves = []
 terminal = False #is the game over
 
 game_result = {
-    'state': None
+    'state': None,
+    'num_games': 0,
+    'player1_score': 0,
+    'player2_score': 0
 }
 
-
-@app.route('/v1/api/game/reset', methods=['POST'])
-def reset_game():
+@app.route('/v1/api/game/<string:result>/reset', methods=['POST'])
+def reset_game(result):
     global grid, moves, game_result
+
+    if result == 'player1' or result == 'player2':
+        game_result[result + '_score'] += 1
+
+    if result != 'reset':
+        game_result['num_games'] += 1
 
     grid = np.zeros((4, 4, 5), dtype=int)
     moves = []
