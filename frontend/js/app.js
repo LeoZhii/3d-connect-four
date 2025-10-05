@@ -20,7 +20,11 @@ class Connect4App {
         this.frameCount = 0;
         this.lastTime = 0;
         this.playerOneTurn = true;
-        
+        this.player1Score = 0;
+        this.player2Score = 0;
+        this.gamesPlayed = 0;
+        this.inSession = true;
+
         this.init();
         this.setupEventListeners();
         // this.loadObjectsFromAPI();
@@ -176,12 +180,6 @@ class Connect4App {
                 }),
             });
     
-            // 2. The server's response body will be JSON, parse it
-            const response_json = await response.json();
-            const updated_coordinates = response_json.coordinates;
-            const state = response_json.state;
-    
-            // 3. Handle non-successful HTTP status codes (e.g., 400, 500)
             if (!response.ok) {
                 // The server returns an object like: {'error': 'Missing x or y coordinate'}
                 const errorMessage = result.error || 'Unknown server error.';
@@ -189,6 +187,10 @@ class Connect4App {
                 // Throw an error to be caught by the outer catch block
                 throw new Error(`Move failed: ${errorMessage}`);
             }
+
+            const response_json = await response.json();
+            const updated_coordinates = response_json.coordinates;
+            const state = response_json.state;
             
             console.log(`State: ${state}`);
             console.log(`Calling createObject with coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
@@ -202,36 +204,45 @@ class Connect4App {
                     });
                     break;
                 }
-                case Connect4App.STATE.PLAYER_1_WIN: {
-                    this.createObject(updated_coordinates, color, true);
-                    this.playerOneTurn = !this.playerOneTurn;
+                 case Connect4App.STATE.PLAYER_1_WIN: {
+                     this.createObject(updated_coordinates, color, true);
+                     this.playerOneTurn = !this.playerOneTurn;
 
-                    this.displayPopup({
-                        message: '🎉 Player 1 Wins!',
-                        color: '#4CAF50'
-                    });
-                    break;
-                }
-                case Connect4App.STATE.PLAYER_2_WIN: {
-                    this.createObject(updated_coordinates, color, true);
-                    this.playerOneTurn = !this.playerOneTurn;
+                     this.displayPopup({
+                         message: '🎉 Player 1 Wins!',
+                         color: '#4CAF50'
+                     });
 
-                    this.displayPopup({
-                        message: '🎉 Player 2 Wins!',
-                        color: '#4CAF50'
-                    });
-                    break;
-                }
-                case Connect4App.STATE.DRAW: {
-                    this.createObject(updated_coordinates, color, true);
-                    this.playerOneTurn = !this.playerOneTurn;
+                     restartGame('player1');
 
-                    this.displayPopup({
-                        message: '🎉 Draw!',
-                        color: '#4CAF50'
-                    });
-                    break;
-                }
+                     break;
+                 }
+                 case Connect4App.STATE.PLAYER_2_WIN: {
+                     this.createObject(updated_coordinates, color, true);
+                     this.playerOneTurn = !this.playerOneTurn;
+
+                     this.displayPopup({
+                         message: '🎉 Player 2 Wins!',
+                         color: '#4CAF50'
+                     });
+
+                     restartGame('player2');
+
+                     break;
+                 }
+                 case Connect4App.STATE.DRAW: {
+                     this.createObject(updated_coordinates, color, true);
+                     this.playerOneTurn = !this.playerOneTurn;
+
+                     this.displayPopup({
+                         message: '🎉 Draw!',
+                         color: '#4CAF50'
+                     });
+
+                     restartGame('draw');
+
+                     break;
+                 }
                 case Connect4App.STATE.CONTINUE: {
                     this.createObject(updated_coordinates, color, true);
                     this.playerOneTurn = !this.playerOneTurn;
@@ -388,6 +399,14 @@ class Connect4App {
 
         // Make UI panel draggable
         this.setupDraggablePanel();
+        
+        // Initialize scoreboard
+        this.updateScoreboard();
+        
+        // Make scoreboard draggable (with small delay to ensure DOM is ready)
+        setTimeout(() => {
+            this.setupDraggableScoreboard();
+        }, 100);
     }
 
     setupDraggablePanel() {
@@ -400,11 +419,7 @@ class Connect4App {
         let xOffset = 0;
         let yOffset = 0;
 
-        panel.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-
-        function dragStart(e) {
+        const dragStart = (e) => {
             // Only start dragging if clicking on the drag handle or the panel itself
             if (e.target.classList.contains('drag-handle') || e.target === panel) {
                 initialX = e.clientX - xOffset;
@@ -413,11 +428,12 @@ class Connect4App {
                 if (e.target === panel || e.target.classList.contains('drag-handle')) {
                     isDragging = true;
                     panel.classList.add('dragging');
+                    e.preventDefault();
                 }
             }
-        }
+        };
 
-        function drag(e) {
+        const drag = (e) => {
             if (isDragging) {
                 e.preventDefault();
                 currentX = e.clientX - initialX;
@@ -430,21 +446,18 @@ class Connect4App {
                 panel.style.left = xOffset + 'px';
                 panel.style.top = yOffset + 'px';
             }
-        }
+        };
 
-        function dragEnd(e) {
-            initialX = currentX;
-            initialY = currentY;
-            isDragging = false;
-            panel.classList.remove('dragging');
-        }
+        const dragEnd = (e) => {
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                panel.classList.remove('dragging');
+            }
+        };
 
-        // Touch support for mobile
-        panel.addEventListener('touchstart', dragStartTouch);
-        document.addEventListener('touchmove', dragTouch);
-        document.addEventListener('touchend', dragEndTouch);
-
-        function dragStartTouch(e) {
+        const dragStartTouch = (e) => {
             if (e.target.classList.contains('drag-handle') || e.target === panel) {
                 initialX = e.touches[0].clientX - xOffset;
                 initialY = e.touches[0].clientY - yOffset;
@@ -452,11 +465,12 @@ class Connect4App {
                 if (e.target === panel || e.target.classList.contains('drag-handle')) {
                     isDragging = true;
                     panel.classList.add('dragging');
+                    e.preventDefault();
                 }
             }
-        }
+        };
 
-        function dragTouch(e) {
+        const dragTouch = (e) => {
             if (isDragging) {
                 e.preventDefault();
                 currentX = e.touches[0].clientX - initialX;
@@ -469,14 +483,127 @@ class Connect4App {
                 panel.style.left = xOffset + 'px';
                 panel.style.top = yOffset + 'px';
             }
-        }
+        };
 
-        function dragEndTouch(e) {
-            initialX = currentX;
-            initialY = currentY;
-            isDragging = false;
-            panel.classList.remove('dragging');
-        }
+        const dragEndTouch = (e) => {
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                panel.classList.remove('dragging');
+            }
+        };
+
+        panel.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        // Touch support for mobile
+        panel.addEventListener('touchstart', dragStartTouch);
+        document.addEventListener('touchmove', dragTouch);
+        document.addEventListener('touchend', dragEndTouch);
+    }
+
+    setupDraggableScoreboard() {
+        const scoreboard = document.getElementById('scoreboard');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        
+        // Initialize position from CSS
+        const rect = scoreboard.getBoundingClientRect();
+        let xOffset = rect.left;
+        let yOffset = rect.top;
+
+        const dragStart = (e) => {
+            if (e.target.classList.contains('drag-handle') || e.target === scoreboard) {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+
+                if (e.target === scoreboard || e.target.classList.contains('drag-handle')) {
+                    isDragging = true;
+                    scoreboard.classList.add('dragging');
+                    e.preventDefault();
+                }
+            }
+        };
+
+        const drag = (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                scoreboard.style.left = xOffset + 'px';
+                scoreboard.style.top = yOffset + 'px';
+            }
+        };
+
+        const dragEnd = (e) => {
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                scoreboard.classList.remove('dragging');
+            }
+        };
+
+        const dragStartTouch = (e) => {
+            if (e.target.classList.contains('drag-handle') || e.target === scoreboard) {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+
+                if (e.target === scoreboard || e.target.classList.contains('drag-handle')) {
+                    isDragging = true;
+                    scoreboard.classList.add('dragging');
+                    e.preventDefault();
+                }
+            }
+        };
+
+        const dragTouch = (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                scoreboard.style.left = xOffset + 'px';
+                scoreboard.style.top = yOffset + 'px';
+            }
+        };
+
+        const dragEndTouch = (e) => {
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+                scoreboard.classList.remove('dragging');
+            }
+        };
+
+        scoreboard.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        // Touch support for mobile
+        scoreboard.addEventListener('touchstart', dragStartTouch);
+        document.addEventListener('touchmove', dragTouch);
+        document.addEventListener('touchend', dragEndTouch);
+    }
+
+    updateScoreboard() {
+        document.getElementById('player1Score').textContent = this.player1Score;
+        document.getElementById('player2Score').textContent = this.player2Score;
+        document.getElementById('currentPlayer').textContent = this.playerOneTurn ? 'Player 1' : 'Player 2';
+        document.getElementById('gamesPlayed').textContent = this.gamesPlayed;
     }
     
     updatePositionPreview(value, axis) {
@@ -567,7 +694,19 @@ class Connect4App {
 // Global functions for UI controls
 let app;
 
-function clearScene() {
+async function restartGame(result) {
+    app.inSession = false;
+
+    app.displayPopup({
+        message: '⏳ Restarting Game...',
+        color: '#FFD580'
+    });
+
+    document.getElementById('playerOneButton').style.opacity = '0.5';
+    document.getElementById('playerTwoButton').style.opacity = '0.5';
+
+    await sleep(2000); 
+
     app.objects.forEach(obj => {
         app.scene.remove(obj);
         if (obj.geometry) obj.geometry.dispose();
@@ -575,7 +714,43 @@ function clearScene() {
     });
     app.objects = [];
     app.updateObjectCount();
+
+    try {
+        const response = await fetch(`http://localhost:5000/v1/api/game/${result}/reset`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            // The server returns an object like: {'error': 'Missing x or y coordinate'}
+            const errorMessage = result.error || 'Unknown server error.';
+            console.error(`HTTP Error ${response.status}: ${errorMessage}`);
+            // Throw an error to be caught by the outer catch block
+            throw new Error(`Move failed: ${errorMessage}`);
+        }
+        const response_json = await response.json();    
+
+        app.gamesPlayed = response_json.num_games;
+        app.player1Score = response_json.player1_score;
+        app.player2Score = response_json.player2_score;
+        app.updateScoreboard();
+
+        app.playerOneTurn = true;
+        app.inSession = true;
+        updateButtons();
+
+    } catch (error) {
+        // 5. Handle network errors (e.g., server unreachable) or errors thrown above
+        console.error('An error occurred during the fetch operation:', error.message);
+        throw error; // Re-throw the error for the caller to handle
+    }
 }
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
 function toggleWireframe() {
     app.wireframeMode = !app.wireframeMode;
@@ -603,7 +778,7 @@ window.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', (event) => {
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
     
-            if (event.target.value === playerTurn) {
+            if (event.target.value === playerTurn && app.inSession) {
                 app.playerMove().then(() => {
                     updateButtons();
                 })
