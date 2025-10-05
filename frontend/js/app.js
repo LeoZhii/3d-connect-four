@@ -510,6 +510,10 @@ class Connect4App {
         this.mouse = new THREE.Vector2();
 
         window.addEventListener('mousemove', (event) => {
+            if (!app.playerOneTurn && app.gameMode === 'pvai') {
+                return;
+            }
+
             this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
             this.updateColumnHighlight();
@@ -526,6 +530,9 @@ class Connect4App {
             }
 
             if (this.highlightedColumn && this.inSession) {
+                if (!app.playerOneTurn && app.gameMode === 'pvai') {
+                    return;
+                }
 
                 const cellData = this.gridCells.find(c => c.mesh === this.highlightedColumn);
 
