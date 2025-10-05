@@ -227,11 +227,11 @@ class Connect4App {
         this.updateObjectCount();
         
         // Add to API
-        this.addObjectToAPI({
-            type: 'sphere',
-            position: position,
-            color: color
-        });
+        // this.addObjectToAPI({
+        //     type: 'sphere',
+        //     position: position,
+        //     color: color
+        // });
     
         this.playerOneTurn = !this.playerOneTurn;
     }

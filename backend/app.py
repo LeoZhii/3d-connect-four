@@ -13,16 +13,18 @@ moves = []
 
 @app.route('/v1/api/players/<int:player_id>/moves', methods=['POST'])
 def record_player_move(player_id):
+    global turn, grid, moves
+
     if player_id != 1 and player_id != 2:
         return jsonify({'error': 'Invalid player_id'}), 400
 
-    body = request.body
+    body = request.json
     if not body or 'coordinates_2d' not in body:
         return jsonify({'error': 'Missing coordinates_2d in request body'}), 400
 
     coordinates_2d = body.get('coordinates_2d')
-    x = coordinates_2d[0]
-    y = coordinates_2d[1]
+    x = int(coordinates_2d[0])
+    y = int(coordinates_2d[1])
 
     if x is None or y is None:
         return jsonify({'error': 'Missing x or y coordinate'}), 400
@@ -35,7 +37,7 @@ def record_player_move(player_id):
     if len(empty_positions) == 0:
         return jsonify({'error': 'Column is full'}), 400
 
-    z = empty_positions[0]
+    z = int(empty_positions[0])
     grid[x, y, z] = player_id
 
     move = {
