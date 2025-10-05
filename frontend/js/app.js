@@ -330,7 +330,7 @@ class Connect4App {
     }
 
     async playerMove(x, z) {
-        const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
+        const color = (this.playerOneTurn) ? '#FF0000' : '#FFFF00';
     
         // const coordinates = document.getElementById('coordinates').value.split(',');
         // const position = { x: coordinates[0], y: coordinates[1] };
@@ -568,8 +568,10 @@ class Connect4App {
                 .catch(error => {
                     console.error("Error occurred while checking move validity:", error);
                 });
-                this.updateColumnHighlight();
+                
             }
+            console.log('updateColumnHighlight');
+            this.updateColumnHighlight();
         });
     }
 
@@ -585,14 +587,18 @@ class Connect4App {
             if (cell !== this.highlightedColumn) {
                 this.highlightedColumn = cell;
                 if (!this.highlightMesh) {
+                    console.log(color);
                     this.highlightMaterial.color.set(color);
 
                     this.highlightMesh = new THREE.Mesh(selectedMesh.geometry.clone(), this.highlightMaterial);
                     this.scene.add(this.highlightMesh);
                 }
                 this.highlightMesh.position.copy(selectedMesh.position);
+            } else {
+                // Same column, but update color if turn changed
+                this.highlightMaterial.color.set(color);
+            }   
                 
-                console.log(this.highlightMesh.position.x/1.5, this.highlightMesh.position.z/1.5);
                 const response = await fetch(`http://localhost:5000/v1/api/game/is_move_valid`, {
                     method: 'POST',
                     headers: {
@@ -626,7 +632,7 @@ class Connect4App {
                 }        
                 
             }
-        } else {
+        else {
             this.highlightedColumn = null;
             if (this.highlightMesh) {
                 this.scene.remove(this.highlightMesh);
