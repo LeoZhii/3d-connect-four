@@ -23,7 +23,7 @@ class Connect4App {
         
         this.init();
         this.setupEventListeners();
-        this.addCoordinateDots();
+        // this.loadObjectsFromAPI();
     }
     
     init() {
@@ -102,19 +102,22 @@ class Connect4App {
         pointLight2.position.set(5, 5, -5);
         this.scene.add(pointLight2);
     }
-    
+
     addGroundPlane() {
-        const geometry = new THREE.PlaneGeometry(20, 20);
-        const material = new THREE.MeshLambertMaterial({ 
+        const geometry = new THREE.PlaneGeometry(10, 10); // width x height
+        const material = new THREE.MeshLambertMaterial({
             color: 0x333333,
             transparent: true,
             opacity: 0.8
         });
         const plane = new THREE.Mesh(geometry, material);
-        plane.rotation.x = -Math.PI / 2;
-        plane.receiveShadow = true;
+        plane.rotation.x = -Math.PI / 2; // lay flat
+        plane.position.set(2, -0.5, 2);  // center at (2, -0.5, 2)
+        plane.receiveShadow = false;
         this.scene.add(plane);
     }
+
+
 
     createObject(position, color, animateGravity = false) {
         let geometry = new THREE.SphereGeometry(0.5, 32, 32);
@@ -124,9 +127,9 @@ class Connect4App {
         });
 
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(position.x, animateGravity ? 10 : position.y, position.z); // start high if animating
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        mesh.position.set(position.x, animateGravity ? 10 : position.y, position.z);
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
 
         // Animation properties
         mesh.userData = {
@@ -241,42 +244,6 @@ class Connect4App {
         
     }
 
-    // Create a mesh of coordinate dots
-    addCoordinateDots(rows = 4, cols = 4, depth = 5, spacing = 1.5) {
-        this.dotGroup = new THREE.Group();
-        this.scene.add(this.dotGroup);
-
-        // Smaller geometry — very fine dots
-        const dotGeometry = new THREE.SphereGeometry(0.025, 8, 8);
-        const baseColor = new THREE.Color(0xc0c0c0); // silver
-
-        for (let x = 0; x < rows; x++) {
-            for (let y = 0; y < cols; y++) {
-                for (let z = 0; z < depth; z++) {
-                    const dotMaterial = new THREE.MeshPhongMaterial({
-                        color: baseColor,
-                        emissive: baseColor,
-                        emissiveIntensity: Math.random() * 0.5 + 0.1, // subtle glow
-                        shininess: 300,
-                        transparent: true,
-                        opacity: 0.9
-                    });
-
-                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
-                    dot.position.set(x * spacing, y * spacing, z * spacing);
-
-                    // Unique blink speed & phase for organic effect
-                    dot.userData.blinkSpeed = Math.random() * 1.5 + 0.5;
-                    dot.userData.blinkPhase = Math.random() * Math.PI * 2;
-
-                    this.dotGroup.add(dot);
-                }
-            }
-        }
-
-        this.coordinateDots = this.dotGroup.children;
-    }
-
     displayPopup(popup_content) {
         const popup = document.createElement('div');
         popup.id = 'invalid-move-popup';
@@ -347,31 +314,11 @@ class Connect4App {
         // Update controls
         this.controls.update();
         
-        // Animate objects
-        this.objects.forEach(obj => {
-            if (obj.userData.rotationSpeed) {
-                obj.rotation.x += obj.userData.rotationSpeed.x;
-                obj.rotation.y += obj.userData.rotationSpeed.y;
-                obj.rotation.z += obj.userData.rotationSpeed.z;
-            }
-        });
-        
         // Calculate FPS
         this.calculateFPS();
         
         // Update UI
         this.updateUI();
-
-        // Animate blinking glowing dots
-        if (this.coordinateDots) {
-            const t = performance.now() * 0.002;
-            this.coordinateDots.forEach(dot => {
-                const phase = dot.userData.blinkPhase;
-                const speed = dot.userData.blinkSpeed;
-                // Make emissive intensity pulse smoothly
-                dot.material.emissiveIntensity = 0.3 + Math.abs(Math.sin(t * speed + phase)) * 0.7;
-            });
-        }
 
         // Gravity Falls
         this.objects.forEach(obj => {
