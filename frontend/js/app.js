@@ -194,8 +194,9 @@ class Connect4App {
             }
             
             console.log(`Calling createObject with coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
-            this.createObject(updated_coordinates, color);
-            
+            this.createObject(updated_coordinates, color, true);
+            this.updateObjectCount();
+
             this.playerOneTurn = !this.playerOneTurn;
 
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
@@ -205,20 +206,6 @@ class Connect4App {
             throw error; // Re-throw the error for the caller to handle
         }
         
-        // Create object in scene
-        // this.createObject(position, color);
-        // this.updateObjectCount();
-
-        // Gravity Falls
-        this.createObject(position, color, true); // pass true to animate gravity
-
-
-        // Add to API
-        // this.addObjectToAPI({
-        //     type: 'sphere',
-        //     position: position,
-        //     color: color
-        // });
     }
 
     // Create a mesh of coordinate dots
