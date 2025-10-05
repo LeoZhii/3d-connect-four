@@ -38,7 +38,10 @@ def record_player_move(player_id):
     column = grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
     if len(empty_positions) == 0:
-        return jsonify({'error': 'Column is full'}), 400
+        response = {
+            'coordinates': [-1, -1, -1]
+        }
+        return jsonify(response), 200
 
     z = int(empty_positions[0])
     grid[x, y, z] = player_id
