@@ -87,22 +87,23 @@
         
         <!-- Center Control Buttons -->
         <div id="center-controls">
-            <button class="center-btn animated-border" id="confirmMoveButton" onclick="app.playerMove()">Confirm Move</button>
+            <!-- <button class="center-btn animated-border" id="confirmMoveButton" onclick="app.playerMove()">Confirm Move</button> -->
+            <button class="center-btn" id="confirmMoveButton" onclick="app.playerMove()">Confirm Move</button>
             <button class="center-btn" onclick="restartGame('reset')">Restart</button>
             <button class="center-btn" onclick="returnToMainMenu()">Main Menu</button>
         </div>
         
-        <div id="scoreboard">
+        <div class="animated-border" id="scoreboard">
             <div class="drag-handle">⋮⋮ Drag to Move ⋮⋮</div>
             <h2>Scoreboard</h2>
             
             <div class="score-group">
-                <div class="player-score animated-border" id="player1Score">
+                <div class="player-score" id="player1ScoreContainer">
                     <div class="player-name">Player 1</div>
                     <div class="score-value" id="player1Score">0</div>
                 </div>
                 
-                <div class="player-score animated-border" id="player2Score">
+                <div class="player-score" id="player2ScoreContainer">
                     <div class="player-name">Player 2</div>
                     <div class="score-value" id="player2Score">0</div>
                 </div>

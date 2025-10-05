@@ -391,3 +391,49 @@ button:hover {
 .setting-group input[type="checkbox"] {
     transform: scale(1.5);
 }
+
+/* Animated Border Styles */
+.animated-border {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.animated-border:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background: conic-gradient(from 0deg, transparent, #1976ed, transparent);
+    border-radius: inherit;
+    animation: rotate 4s linear infinite;
+}
+
+.animated-border:after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    z-index: -1;
+    background: inherit;
+    border-radius: inherit;
+}
+
+/* Special handling for player-score elements */
+.player-score.animated-border:after {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
