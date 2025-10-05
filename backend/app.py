@@ -88,12 +88,12 @@ def record_player_move(player_id):
     if winner == 0.5: #draw
         state = State.DRAW
         game_result['state'] = State.DRAW
-    else if winner == 1: #win
+    elif winner == 1: #win
         state = player_id
         game_result['state'] = player_id 
-    else: #loss 
-        state = get_opponent(player_id)
-        game_result['state'] = get_opponent(player_id)
+    # else: #loss 
+    #     state = get_opponent(player_id)
+    #     game_result['state'] = get_opponent(player_id)
 
     response = {
         'coordinates': {'x': x, 'y': z, 'z': y},
@@ -138,8 +138,7 @@ def get_result(x, y, z, player_id):
             terminal = True 
             return 1 #win 
 
-    terminal = True 
-    return 0 #loss
+    return None 
 
 
 def is_terminal(grid):
