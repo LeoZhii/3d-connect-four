@@ -190,7 +190,7 @@ class Connect4App {
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
     
         const coordinates = document.getElementById('coordinates').value.split(',');
-        const position = { x: coordinates[0], y: coordinates[1], z: coordinates[2] };
+        const position = { x: coordinates[0], y: coordinates[1] };
         
         const playerId = (this.playerOneTurn) ? 1 : 2;
 
