@@ -350,7 +350,7 @@ class Connect4App {
 
         window.addEventListener('click', () => {
             if (this.highlightedColumn) {
-                this.dropPiece(this.highlightedColumn.x, this.highlightedColumn.z);
+                // this.dropPiece(this.highlightedColumn.x, this.highlightedColumn.z);
             }
         });
     }
