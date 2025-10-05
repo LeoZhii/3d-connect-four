@@ -300,7 +300,6 @@ class Connect4App {
 
 // Global functions for UI controls
 let app;
-const buttons = document.querySelectorAll('.playerButton');
 
 function clearScene() {
     app.objects.forEach(obj => {
@@ -319,7 +318,9 @@ function toggleWireframe() {
     });
 }
 
-function updateButton() {
+function updateButtons() {
+    console.log(`Update button: Is player one turn: ${app.playerOneTurn}`);
+
     if (app.playerOneTurn) {
         document.getElementById('playerOneButton').style.opacity = '1';
         document.getElementById('playerTwoButton').style.opacity = '0.5';
@@ -332,7 +333,7 @@ function updateButton() {
 // Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
     app = new Connect4App();
-    updateButton();
+    const buttons = document.querySelectorAll('.playerButton');
 
     buttons.forEach(button => {
         button.addEventListener('click', (event) => {
@@ -342,11 +343,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 app.playerMove();
             }
             console.log(`Button clicked: ${event.target.textContent}`);
-            console.log(`Is player one turn: ${app.playerOneTurn}`);
+            updateButtons();
         });
-    
-        updateButton();
     });
+
+    updateButtons();
+
 });
 
 // Clean up when page unloads
