@@ -25,6 +25,7 @@ class Connect4App {
         this.gamesPlayed = 0;
         this.inSession = false;
         this.currentTempObject = null;
+        this.currentHoverObject = null;
         this.gameMode = 'pvp';
         this.gameDifficulty = 'easy';
         this.playerOrder = 'PlayerFirst';
@@ -148,21 +149,24 @@ class Connect4App {
         this.scene.add(plane);
     }
 
-    createObject(position, color, animateGravity = false, hollow = false) {
+    createObject(position, color, animateGravity = false, mode = 'regular') {
         let geometry = new THREE.SphereGeometry(0.5, 32, 32);
         const material = new THREE.MeshPhongMaterial({
             color: color,
             shininess: 100,
         });
 
-        if (hollow) {
+        if (mode == 'hollow') {
             material.transparent = true;
             material.opacity = 0.5; 
             material.wireframe = true;
             material.polygonOffset = true;
             material.polygonOffsetFactor = 1;
             material.polygonOffsetUnits = 1;
-        }        
+        } else if (mode == 'transparent') {
+            material.transparent = true;
+            material.opacity = 0.5;
+        }
 
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(position.x, animateGravity ? 10 : position.y, position.z);
@@ -200,18 +204,18 @@ class Connect4App {
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
 
         // Update confirm button styling based on current turn
-        const confirmButton = document.getElementById('confirmMoveButton');
-        if (confirmButton) {
-            // Add animated-border class if not already present
-            if (!confirmButton.classList.contains('animated-border')) {
-                confirmButton.classList.add('animated-border');
-            }
+        // const confirmButton = document.getElementById('confirmMoveButton');
+        // if (confirmButton) {
+        //     // Add animated-border class if not already present
+        //     if (!confirmButton.classList.contains('animated-border')) {
+        //         confirmButton.classList.add('animated-border');
+        //     }
             
-            // Update CSS custom property for border gradient based on turn
-            const gradientColor = app.playerOneTurn ? '#FF0000' : '#FFFF00'; 
-            const gradient = `conic-gradient(from 0deg, transparent, ${gradientColor}, transparent)`;
-            confirmButton.style.setProperty('--border-gradient', gradient);
-        }
+        //     // Update CSS custom property for border gradient based on turn
+        //     const gradientColor = app.playerOneTurn ? '#FF0000' : '#FFFF00'; 
+        //     const gradient = `conic-gradient(from 0deg, transparent, ${gradientColor}, transparent)`;
+        //     confirmButton.style.setProperty('--border-gradient', gradient);
+        // }
 
         const response = await fetch(`http://localhost:5000/v1/api/game/is_move_valid`, {
             method: 'POST',
@@ -244,7 +248,7 @@ class Connect4App {
             });
         }
         else {
-            this.currentTempObject = this.createObject(response_coordinates, color, false, true);
+            this.currentTempObject = this.createObject(response_coordinates, color, false, 'hollow');
         }        
     }
 
@@ -325,7 +329,7 @@ class Connect4App {
         }
     }
 
-    async playerMove() {
+    async playerMove(x, z) {
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
     
         // const coordinates = document.getElementById('coordinates').value.split(',');
@@ -340,8 +344,8 @@ class Connect4App {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    // "coordinates_2d": [position.x, position.y]
-                    "coordinates_2d": [this.currentTempObject.position.x/1.5, this.currentTempObject.position.z/1.5]
+                    "coordinates_2d": [x, z]
+                    // "coordinates_2d": [this.currentTempObject.position.x/1.5, this.currentTempObject.position.z/1.5]
                 }),
             });
     
@@ -427,13 +431,13 @@ class Connect4App {
                         return;
                     }
 
-                    const confirmButton = document.getElementById('confirmMoveButton');
-                    if (confirmButton) {
-                        // Add animated-border class if not already present
-                        if (confirmButton.classList.contains('animated-border')) {
-                            confirmButton.classList.remove('animated-border');
-                        }
-                    }
+                    // const confirmButton = document.getElementById('confirmMoveButton');
+                    // if (confirmButton) {
+                    //     // Add animated-border class if not already present
+                    //     if (confirmButton.classList.contains('animated-border')) {
+                    //         confirmButton.classList.remove('animated-border');
+                    //     }
+                    // }
                 }
             }
                         
@@ -558,32 +562,69 @@ class Connect4App {
                 if (cellData) {
                     console.log(`Clicked column at matrix position: (${cellData.x}, ${cellData.z})`);
                 }
-                this.checkMoveValidity(this.highlightedColumn.x, this.highlightedColumn.z).then(() => {
+                this.playerMove(this.highlightedColumn.x, this.highlightedColumn.z).then(() => {
                     // updateButtons();
                 })
                 .catch(error => {
                     console.error("Error occurred while checking move validity:", error);
                 });
+                this.updateColumnHighlight();
             }
         });
     }
 
-    updateColumnHighlight() {
+    async updateColumnHighlight() {
         this.raycaster.setFromCamera(this.mouse, this.camera);
         const intersects = this.raycaster.intersectObjects(this.gridCells.map(c => c.mesh));
+        const color = this.playerOneTurn ? '#ff0000' : '#ffff00';
+        
         if (intersects.length > 0) {
             const selectedMesh = intersects[0].object;
             const cell = this.gridCells.find(c => c.mesh === selectedMesh);
+            const color = this.playerOneTurn ? '#ff0000' : '#ffff00';
             if (cell !== this.highlightedColumn) {
                 this.highlightedColumn = cell;
                 if (!this.highlightMesh) {
-                    const color = app.playerOneTurn ? '#ff0000' : '#ffff00';
                     this.highlightMaterial.color.set(color);
 
                     this.highlightMesh = new THREE.Mesh(selectedMesh.geometry.clone(), this.highlightMaterial);
                     this.scene.add(this.highlightMesh);
                 }
                 this.highlightMesh.position.copy(selectedMesh.position);
+                
+                console.log(this.highlightMesh.position.x/1.5, this.highlightMesh.position.z/1.5);
+                const response = await fetch(`http://localhost:5000/v1/api/game/is_move_valid`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "coordinates_2d": [this.highlightMesh.position.x/1.5, this.highlightMesh.position.z/1.5]
+                    }),
+                });
+        
+                if (!response.ok) {
+                    const errorMessage = result.error || 'Unknown server error.';
+                    console.error(`HTTP Error ${response.status}: ${errorMessage}`);
+                    // Throw an error to be caught by the outer catch block
+                    throw new Error(`Move failed: ${errorMessage}`);
+                }
+        
+                const response_json = await response.json();
+                let response_coordinates = response_json.coordinates;
+                response_coordinates.x *= 1.5;
+                response_coordinates.y *= 1.5;
+                response_coordinates.z *= 1.5;
+        
+                if (response_json.state === Connect4App.STATE.CONTINUE) {
+                    if (this.currentHoverObject) {
+                        this.scene.remove(this.currentHoverObject);
+                        this.currentHoverObject = null;
+                    }
+
+                    this.currentHoverObject = this.createObject(response_coordinates, color, false, 'transparent');
+                }        
+                
             }
         } else {
             this.highlightedColumn = null;
