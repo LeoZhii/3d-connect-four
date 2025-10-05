@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import numpy as np
 import itertools
+from state import State
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
@@ -39,7 +40,7 @@ def record_player_move(player_id):
     empty_positions = np.where(column == 0)[0]
     if len(empty_positions) == 0:
         response = {
-            'coordinates': [-1, -1, -1]
+            'coordinates': {'x': -1, 'y': -1, 'z': -1}
         }
         return jsonify(response), 200
 
@@ -54,13 +55,20 @@ def record_player_move(player_id):
     moves.append(move)
     turn += 1
 
-    # TODO: check for draw
-
+    state = State.CONTINUE
     winner = check_winner(x, y, z, player_id)
+    draw = False
+
+    if winner is None:
+        draw = check_draw(grid)
+        if draw:
+            state = State.DRAW
+    else:
+        state = winner
 
     response = {
-        'coordinates': {'x':x, 'y':z, 'z':y},
-        'winner': winner
+        'coordinates': {'x': x, 'y': z, 'z': y},
+        'state': state
     }
     return jsonify(response), 201
 
@@ -96,6 +104,10 @@ def check_winner(x, y, z, player_id):
             return player_id
 
     return None
+
+
+def check_draw(grid):
+    return not np.any(grid == 0)
 
 
 if __name__ == '__main__':
