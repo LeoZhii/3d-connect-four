@@ -421,8 +421,6 @@ class Connect4App {
                     this.createObject(updated_coordinates, color, true);
                     this.playerOneTurn = !this.playerOneTurn;
 
-                    console.log(app.gameMode);
-
                     if (app.gameMode === 'pvai') {
                         console.log('AI Move');
 
@@ -570,7 +568,6 @@ class Connect4App {
                 });
                 
             }
-            console.log('updateColumnHighlight');
             this.updateColumnHighlight();
         });
     }
