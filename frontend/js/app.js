@@ -66,7 +66,11 @@ class Connect4App {
         
         // Start animation loop
         this.animate();
-        
+
+        // Add interactive grid lines
+        this.addInteractiveGrid();
+        this.setupMouseInteraction()
+
         // Handle window resize
         window.addEventListener('resize', () => this.onWindowResize());
         
@@ -284,7 +288,87 @@ class Connect4App {
             }, 300);
         }, 2000);
     }
-    
+
+    // Add interactive gridlines
+    addInteractiveGrid() {
+        const rows = 4, cols = 4, depth = 5;
+        const spacing = 1.5;
+        this.gridCells = []; // store each column for interaction
+
+        const baseMaterial = new THREE.MeshBasicMaterial({
+            color: 0x555555,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.5
+        });
+
+        this.highlightMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffff00,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.7
+        });
+
+        this.highlightMesh = null; // currently glowing column
+
+        this.gridGroup = new THREE.Group();
+
+        for (let x = 0; x < rows; x++) {
+            for (let z = 0; z < cols; z++) {
+                const geometry = new THREE.BoxGeometry(spacing, depth * spacing, spacing);
+                const mesh = new THREE.Mesh(geometry, baseMaterial.clone());
+                mesh.position.set(x * spacing, (depth * spacing)/2 - 0.5, z * spacing); // centered vertically
+                this.gridGroup.add(mesh);
+                this.gridCells.push({x, z, mesh});
+            }
+        }
+
+        this.scene.add(this.gridGroup);
+    }
+
+    // Raycaster for selecting the grid
+    setupMouseInteraction() {
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+
+        window.addEventListener('mousemove', (event) => {
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            this.updateColumnHighlight();
+        });
+
+        window.addEventListener('click', () => {
+            if (this.highlightedColumn) {
+                this.dropPiece(this.highlightedColumn.x, this.highlightedColumn.z);
+            }
+        });
+    }
+
+    updateColumnHighlight() {
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.gridCells.map(c => c.mesh));
+        if (intersects.length > 0) {
+            const selectedMesh = intersects[0].object;
+            const cell = this.gridCells.find(c => c.mesh === selectedMesh);
+            if (cell !== this.highlightedColumn) {
+                this.highlightedColumn = cell;
+                if (!this.highlightMesh) {
+                    this.highlightMesh = new THREE.Mesh(selectedMesh.geometry.clone(), this.highlightMaterial);
+                    this.scene.add(this.highlightMesh);
+                }
+                this.highlightMesh.position.copy(selectedMesh.position);
+            }
+        } else {
+            this.highlightedColumn = null;
+            if (this.highlightMesh) {
+                this.scene.remove(this.highlightMesh);
+                this.highlightMesh = null;
+            }
+        }
+    }
+
+
+
     setupEventListeners() {
         // Position controls
         // ['posX', 'posY', 'posZ'].forEach(axis => {
