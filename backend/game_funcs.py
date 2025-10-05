@@ -20,7 +20,6 @@ class game_data_class:
 
         # check for draw
         if not np.any(grid==0):
-            self.terminal = True
             return 0.5
 
         for dx, dy, dz in directions:
@@ -39,7 +38,7 @@ class game_data_class:
             for i in range(1, 4):
                 nx, ny, nz = x - dx*i, y - dy*i, z - dz*i
                 if 0 <= nx < 4 and 0 <= ny < 4 and 0 <= nz < 5:
-                    if self.grid[nx, ny, nz] == player_id:
+                    if grid[nx, ny, nz] == player_id:
                         count += 1
                     else:
                         break
@@ -47,27 +46,38 @@ class game_data_class:
                     break
 
             if count >= 4:
-                self.terminal = True 
                 return 1 #win 
 
         return None 
 
     def is_terminal(self, node_state):
-        return self.terminal 
+        # Check if board is full (draw)
+        if not np.any(node_state == 0):
+            return True
+            
+        # Check for any winning condition
+        for x in range(4):
+            for y in range(4):
+                for z in range(5):
+                    if node_state[x, y, z] != 0:
+                        result = self.get_result(x, y, z, node_state[x, y, z], grid=node_state)
+                        if result is not None and result != 0.5:  # Someone won
+                            return True
+        return False 
 
     def get_opponent(self, current_player):
         return 1 if current_player == 2 else 2
 
     def get_valid_moves(self, node_state):
         # to be valid, coordinate must be empty and apease gravity
-        zero_indices = np.argwhere(self.grid == 0)
+        zero_indices = np.argwhere(node_state == 0)
 
         valid_moves = []
         for idx in zero_indices:
             x, y, z = idx[0], idx[1], idx[2]
 
             # check if z is 0 OR space directly below is NOT empty to be valid
-            if z == 0 or self.grid[x, y, z-1] != 0:
+            if z == 0 or node_state[x, y, z-1] != 0:
                 valid_moves.append({'x': int(x), 'y': int(y), 'z': int(z)})
             
         return valid_moves

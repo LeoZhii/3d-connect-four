@@ -15,7 +15,7 @@ class Node:
         self.visits = 0         #times this node was explored
         self.wins = 0           #wins recorded from simulations
 
-    def is_fully_expanded(self):
+    def is_fully_expanded(self, game):
         return len(self.children) == len(game.get_valid_moves(self.state))
 
     def best_child(self, exploration_constant):
@@ -68,19 +68,29 @@ class MCTS:
         #simulate random play until terminal
         current_player = player
         sim_state = copy.deepcopy(state)
+        
         while not game.is_terminal(sim_state):
             valid_moves = game.get_valid_moves(sim_state)
-            last_move = random.choice(valid_moves)
-            sim_state = game.make_move(sim_state, last_move, current_player)
-            winner_id = current_player 
+            if not valid_moves:  # No valid moves means draw
+                return 0.5
+                
+            move = random.choice(valid_moves)
+            sim_state = game.make_move(sim_state, move, current_player)
+            
+            # Check if this move resulted in a win
+            result = game.get_result(move['x'], move['y'], move['z'], current_player, grid=sim_state)
+            if result is not None:  # Game ended
+                if result == 0.5:  # Draw
+                    return 0.5
+                elif result == 1:  # Current player won
+                    return 1 if current_player == player else 0
+                else:  # Current player lost
+                    return 0 if current_player == player else 1
+            
             current_player = game.get_opponent(current_player)
-        result = game.get_result(*last_move, player_id, grid=sim_state)
-        if result == 0.5: return result
-        # return w/l based off of starting player 
-        if winner_id == player: 
-            return 1 # Root player won
-        else:
-            return 0 # Root player lost 
+        
+        # If we reach here, it's a draw
+        return 0.5 
 
     def _backpropagate(self, node, reward):
         while node:
@@ -92,6 +102,6 @@ class MCTS:
 if __name__ == "__main__":
     game = game_data
     board = game.grid
-    mcts = MCTS(simulations=8)
-    move = mcts.best_move(board, player=1, game=game)
+    mcts = MCTS(simulations=1)
+    move = mcts.best_move(board, player=1000000000000, game=game)
     print(f"Best move chosen: {move}")
