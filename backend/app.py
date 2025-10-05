@@ -145,7 +145,7 @@ def is_terminal(grid):
     return terminal 
 
 def get_opponent(current_player):
-    return 1 if player == 2 else 2
+    return 1 if current_player == 2 else 2
 
 
 def get_valid_moves():

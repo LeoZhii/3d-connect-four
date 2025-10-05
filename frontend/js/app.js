@@ -769,8 +769,84 @@ function updateButtons() {
     }
 }
 
+// Main Menu Functions
+function startGame() {
+    document.getElementById('main-menu').classList.add('hidden');
+    document.getElementById('loading').style.display = 'block';
+    
+    setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+    }, 1000);
+}
+
+function returnToMainMenu() {
+    document.getElementById('main-menu').classList.remove('hidden');
+    // Reset game state
+    if (app) {
+        app.inSession = false;
+        app.objects.forEach(obj => {
+            app.scene.remove(obj);
+        });
+        app.objects = [];
+        app.updateObjectCount();
+    }
+}
+
+function showInstructions() {
+    document.getElementById('instructions-modal').style.display = 'block';
+}
+
+function closeInstructions() {
+    document.getElementById('instructions-modal').style.display = 'none';
+}
+
+function showSettings() {
+    document.getElementById('settings-modal').style.display = 'block';
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').style.display = 'none';
+}
+
+function applySettings() {
+    const theme = document.getElementById('theme-select').value;
+    const soundEnabled = document.getElementById('sound-toggle').checked;
+    const uiScale = document.getElementById('ui-scale').value;
+    
+    // Apply theme
+    if (theme === 'dark') {
+        document.body.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
+    } else if (theme === 'colorful') {
+        document.body.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 50%, #45b7d1 100%)';
+    } else {
+        document.body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    }
+    
+    // Apply UI scale
+    document.documentElement.style.setProperty('--ui-scale', uiScale);
+    
+    // Store settings
+    localStorage.setItem('theme', theme);
+    localStorage.setItem('soundEnabled', soundEnabled);
+    localStorage.setItem('uiScale', uiScale);
+    
+    closeSettings();
+}
+
 // Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
+    // Load saved settings
+    const savedTheme = localStorage.getItem('theme') || 'default';
+    const savedSound = localStorage.getItem('soundEnabled') !== 'false';
+    const savedScale = localStorage.getItem('uiScale') || '1';
+    
+    document.getElementById('theme-select').value = savedTheme;
+    document.getElementById('sound-toggle').checked = savedSound;
+    document.getElementById('ui-scale').value = savedScale;
+    
+    // Apply saved settings
+    applySettings();
+    
     app = new Connect4App();
     const buttons = document.querySelectorAll('.playerButton');
 
