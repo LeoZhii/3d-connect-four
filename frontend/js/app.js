@@ -41,31 +41,50 @@ class Connect4App {
         // Create scene
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x222222);
-        
-        // Create camera
+
+        // Define orbit target
+        const target = new THREE.Vector3(2.3, 3, 2.3);
+
+// Create camera
         this.camera = new THREE.PerspectiveCamera(
-            75, 
-            window.innerWidth / window.innerHeight, 
-            0.1, 
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
             1000
         );
-        this.camera.position.set(0, 2, 10);
-        
-        // Create renderer
+
+// Position camera relative to target
+        const distance = 15; // fixed distance from target
+        this.camera.position.set(
+            target.x + distance,
+            target.y + distance,
+            target.z + distance
+        );
+
+// Create renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        
-        // Add renderer to container
+
+// Add renderer to container
         const container = document.getElementById('canvas-container');
         container.appendChild(this.renderer.domElement);
-        
-        // Add orbit controls
+
+// Add orbit controls
         this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.target.copy(target);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
-        
+
+// Camera restrictions
+        this.controls.enablePan = false;
+        this.controls.minDistance = distance; // lock distance
+        this.controls.maxDistance = distance; // lock distance
+
+        this.controls.update();
+
+
         // Add lighting
         this.setupLighting();
         
