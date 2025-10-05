@@ -16,6 +16,7 @@ class Connect4App {
         this.init();
         this.setupEventListeners();
         // this.loadObjectsFromAPI();
+        this.addCoordinateDots();
     }
     
     init() {
@@ -107,22 +108,20 @@ class Connect4App {
         plane.receiveShadow = true;
         this.scene.add(plane);
     }
-    
-    createObject(position, color) {
-        let geometry = new THREE.SphereGeometry(0.5, 32, 32);
 
-        
-        const material = new THREE.MeshPhongMaterial({ 
+    createObject(position, color, animateGravity = false) {
+        let geometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const material = new THREE.MeshPhongMaterial({
             color: color,
             shininess: 100
         });
-        
+
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(position.x, position.y, position.z);
+        mesh.position.set(position.x, animateGravity ? 10 : position.y, position.z); // start high if animating
         mesh.castShadow = true;
         mesh.receiveShadow = true;
-        
-        // Add some animation properties
+
+        // Animation properties
         mesh.userData = {
             id: Date.now(),
             type: 'sphere',
@@ -131,15 +130,19 @@ class Connect4App {
                 x: (Math.random() - 0.5) * 0.02,
                 y: (Math.random() - 0.5) * 0.02,
                 z: (Math.random() - 0.5) * 0.02
-            }
+            },
+            animateGravity: animateGravity,
+            targetY: position.y,
+            velocityY: 0
         };
-        
+
         this.scene.add(mesh);
         this.objects.push(mesh);
-        
+
         return mesh;
     }
-    
+
+
     async loadObjectsFromAPI() {
         try {
             const response = await fetch('http://localhost:5000/api/objects');
@@ -223,9 +226,13 @@ class Connect4App {
         }
         
         // Create object in scene
-        this.createObject(position, color);
-        this.updateObjectCount();
-        
+        // this.createObject(position, color);
+        // this.updateObjectCount();
+
+        // Gravity Falls
+        this.createObject(position, color, true); // pass true to animate gravity
+
+
         // Add to API
         // this.addObjectToAPI({
         //     type: 'sphere',
@@ -235,7 +242,47 @@ class Connect4App {
     
         this.playerOneTurn = !this.playerOneTurn;
     }
-    
+
+    // Create a mesh of coordinate dots
+    addCoordinateDots(rows = 4, cols = 4, depth = 5, spacing = 1.5) {
+        this.dotGroup = new THREE.Group();
+        this.scene.add(this.dotGroup);
+
+        // Smaller geometry — very fine dots
+        const dotGeometry = new THREE.SphereGeometry(0.025, 8, 8);
+        const baseColor = new THREE.Color(0xc0c0c0); // silver
+
+        for (let x = 0; x < rows; x++) {
+            for (let y = 0; y < cols; y++) {
+                for (let z = 0; z < depth; z++) {
+                    const dotMaterial = new THREE.MeshPhongMaterial({
+                        color: baseColor,
+                        emissive: baseColor,
+                        emissiveIntensity: Math.random() * 0.5 + 0.1, // subtle glow
+                        shininess: 300,
+                        transparent: true,
+                        opacity: 0.9
+                    });
+
+                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+                    dot.position.set(x * spacing, y * spacing, z * spacing);
+
+                    // Unique blink speed & phase for organic effect
+                    dot.userData.blinkSpeed = Math.random() * 1.5 + 0.5;
+                    dot.userData.blinkPhase = Math.random() * Math.PI * 2;
+
+                    this.dotGroup.add(dot);
+                }
+            }
+        }
+
+        this.coordinateDots = this.dotGroup.children;
+    }
+
+
+
+
+
     setupEventListeners() {
         // Position controls
         // ['posX', 'posY', 'posZ'].forEach(axis => {
@@ -279,7 +326,35 @@ class Connect4App {
         
         // Update UI
         this.updateUI();
-        
+
+        // Animate blinking glowing dots
+        if (this.coordinateDots) {
+            const t = performance.now() * 0.002;
+            this.coordinateDots.forEach(dot => {
+                const phase = dot.userData.blinkPhase;
+                const speed = dot.userData.blinkSpeed;
+                // Make emissive intensity pulse smoothly
+                dot.material.emissiveIntensity = 0.3 + Math.abs(Math.sin(t * speed + phase)) * 0.7;
+            });
+        }
+
+        // Gravity Falls
+        this.objects.forEach(obj => {
+            if (obj.userData.animateGravity) {
+                // Simple gravity effect
+                obj.userData.velocityY -= 0.02; // gravity acceleration
+                obj.position.y += obj.userData.velocityY;
+
+                // Stop at target
+                if (obj.position.y <= obj.userData.targetY) {
+                    obj.position.y = obj.userData.targetY;
+                    obj.userData.animateGravity = false;
+                    obj.userData.velocityY = 0;
+                }
+            }
+        });
+
+
         // Render
         this.renderer.render(this.scene, this.camera);
     }
