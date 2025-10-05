@@ -218,7 +218,13 @@ class Connect4App {
             }
     
             this.createObject(updated_coordinates, color);
-    
+            console.log(`Player ${playerId} made a move`);
+            this.playerOneTurn = !this.playerOneTurn;
+            console.log(`It's now player ${(this.playerOneTurn) ? 1 : 2}'s turn`);
+
+            console.log(`\nValue of playerOneTurn: ${app.playerOneTurn}`);
+            playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
+            console.log(`Value of playerTurn: ${playerTurn} \n\n`);
         } catch (error) {
             // 5. Handle network errors (e.g., server unreachable) or errors thrown above
             console.error('An error occurred during the fetch operation:', error.message);
@@ -239,8 +245,6 @@ class Connect4App {
         //     position: position,
         //     color: color
         // });
-    
-        this.playerOneTurn = !this.playerOneTurn;
     }
 
     // Create a mesh of coordinate dots
@@ -278,11 +282,7 @@ class Connect4App {
 
         this.coordinateDots = this.dotGroup.children;
     }
-
-
-
-
-
+    
     setupEventListeners() {
         // Position controls
         // ['posX', 'posY', 'posZ'].forEach(axis => {
@@ -427,7 +427,7 @@ function toggleWireframe() {
 }
 
 function updateButtons() {
-    console.log(`Update button: Is player one turn: ${app.playerOneTurn}`);
+    // console.log(`Update button: Is player one turn: ${app.playerOneTurn}`);
 
     if (app.playerOneTurn) {
         document.getElementById('playerOneButton').style.opacity = '1';
@@ -445,14 +445,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
     buttons.forEach(button => {
         button.addEventListener('click', (event) => {
+            // console.log(`\nValue of playerOneTurn: ${app.playerOneTurn}`);
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
+            // console.log(`Value of playerTurn: ${playerTurn} \n\n`);
     
             if (event.target.value === playerTurn) {
-                console.log(`${playerTurn} made a move`);
-                app.playerMove();
+                app.playerMove().then(playerData => {
+                    updateButtons();
+                })
+                .catch(error => {
+                    console.error("3. Error occurred during API call:", error);
+                });
             }
-            console.log(`Button clicked: ${event.target.textContent}`);
-            updateButtons();
         });
     });
 
