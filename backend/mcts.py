@@ -65,31 +65,59 @@ class MCTS:
         node.children.append(child)
 
     def _simulate(self, state, player, game):
-        #simulate random play until terminal
-        current_player = player
+        # The player who started the MCTS tree search is 'player' (the AI)
         sim_state = copy.deepcopy(state)
+        # The player whose turn it is to make the FIRST move in the simulation
+        current_player = game.get_opponent(player) 
         
-        while not game.is_terminal(sim_state):
+        # Keep track of the last move made and by whom, needed for get_result
+        last_move = None
+        
+        while True:
             valid_moves = game.get_valid_moves(sim_state)
-            if not valid_moves:  # No valid moves means draw
-                return 0.5
+
+            # --- Check for Terminal State (Win or Draw) based on the LAST move ---
+            # If a move was made, check the result of that move
+            if last_move:
+                # 'result' is 1 (current_player won), 0.5 (draw), or None (game continues)
+                result = game.get_result(last_move['x'], last_move['y'], last_move['z'], 
+                                         game.get_opponent(current_player), grid=sim_state)
                 
+                if result is not None:
+                    # Game is terminal (Win or Draw)
+                    break 
+
+            # --- Handle No Valid Moves (Pre-emptive Draw Check) ---
+            if not valid_moves:
+                # This should be covered by get_result checking for grid full,
+                # but serves as a safety break.
+                result = 0.5 
+                break
+
+            # --- Random Move and State Update ---
             move = random.choice(valid_moves)
             sim_state = game.make_move(sim_state, move, current_player)
+            last_move = move
             
-            # Check if this move resulted in a win
-            result = game.get_result(move['x'], move['y'], move['z'], current_player, grid=sim_state)
-            if result is not None:  # Game ended
-                if result == 0.5:  # Draw
-                    return 0.5
-                elif result == 1:  # Current player won
-                    return 1 if current_player == player else 0
-                else:  # Current player lost
-                    return 0 if current_player == player else 1
-            
+            # Switch to the next player
             current_player = game.get_opponent(current_player)
+
+        # --- Backpropagate the Final Reward ---
+        # If the loop broke, the game is terminal. 'result' holds the outcome (1 or 0.5).
         
-        # If we reach here, it's a draw
+        if result == 1:
+            # A win (1) means the player who just finished their move (the opponent of current_player) won.
+            winner = game.get_opponent(current_player)
+            
+            if winner == player:
+                return 1  # AI player won: Full Reward
+            else:
+                return 0  # AI player lost: Zero Reward
+                
+        elif result == 0.5:
+            return 0.5 # Draw Reward
+        
+        # Fallback: Should not be reached if get_result logic is correct
         return 0.5 
 
     def _backpropagate(self, node, reward):
