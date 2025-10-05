@@ -116,7 +116,7 @@ class Connect4App {
     }
 
     addGroundPlane() {
-        const geometry = new THREE.PlaneGeometry(10, 10); // width x height
+        const geometry = new THREE.PlaneGeometry(20, 20); // width x height
         const material = new THREE.MeshLambertMaterial({
             color: 0x333333,
             transparent: true,
@@ -124,7 +124,7 @@ class Connect4App {
         });
         const plane = new THREE.Mesh(geometry, material);
         plane.rotation.x = -Math.PI / 2; // lay flat
-        plane.position.set(2, -0.5, 2);  // center at (2, -0.5, 2)
+        plane.position.set(2.3, -0.5, 2.3);  // center at (2, -0.5, 2)
         plane.receiveShadow = false;
         this.scene.add(plane);
     }
