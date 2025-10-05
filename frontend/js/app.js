@@ -24,6 +24,8 @@ class Connect4App {
         this.player2Score = 0;
         this.gamesPlayed = 0;
         this.inSession = true;
+        this.gameMode = 'pvp';
+        this.gameDifficulty = 'easy';
 
         this.init();
         this.setupEventListeners();
@@ -124,8 +126,6 @@ class Connect4App {
         plane.receiveShadow = false;
         this.scene.add(plane);
     }
-
-
 
     createObject(position, color, animateGravity = false) {
         let geometry = new THREE.SphereGeometry(0.5, 32, 32);
@@ -235,7 +235,7 @@ class Connect4App {
                      this.playerOneTurn = !this.playerOneTurn;
 
                      this.displayPopup({
-                         message: '🎉 Draw!',
+                         message: '🤝 Draw!',
                          color: '#4CAF50'
                      });
 
@@ -378,21 +378,7 @@ class Connect4App {
         }
     }
 
-
-
     setupEventListeners() {
-        // Position controls
-        // ['posX', 'posY', 'posZ'].forEach(axis => {
-        //     document.getElementById(axis).addEventListener('input', (e) => {
-        //         this.updatePositionPreview(e.target.value, axis);
-        //     });
-        // });
-        
-        // Color control
-        // document.getElementById('objectColor').addEventListener('change', (e) => {
-        //     // Color preview could be added here
-        // });
-
         document.getElementById('coordinates').addEventListener('input', (e) => {
             this.updatePositionPreview(e.target.value, 'coordinates');
         });
@@ -407,6 +393,31 @@ class Connect4App {
         setTimeout(() => {
             this.setupDraggableScoreboard();
         }, 100);
+    }
+    
+    setupGameModeToggle() {
+        const gameModeSelect = document.getElementById('game-mode-select');
+        const difficultySelect = document.getElementById('difficulty-select');
+        
+        // Function to toggle difficulty select based on game mode
+        function toggleDifficultySelect() {
+            if (gameModeSelect.value === 'pvp') {
+                difficultySelect.disabled = true;
+                difficultySelect.style.opacity = '0.5';
+                difficultySelect.style.cursor = 'not-allowed';
+
+            } else {
+                difficultySelect.disabled = false;
+                difficultySelect.style.opacity = '1';
+                difficultySelect.style.cursor = 'pointer';
+            }
+        }
+        
+        // Set initial state
+        toggleDifficultySelect();
+        
+        // Add event listener for changes
+        gameModeSelect.addEventListener('change', toggleDifficultySelect);
     }
 
     setupDraggablePanel() {
@@ -705,8 +716,6 @@ async function restartGame(result) {
     document.getElementById('playerOneButton').style.opacity = '0.5';
     document.getElementById('playerTwoButton').style.opacity = '0.5';
 
-    await sleep(2000); 
-
     app.objects.forEach(obj => {
         app.scene.remove(obj);
         if (obj.geometry) obj.geometry.dispose();
@@ -714,6 +723,8 @@ async function restartGame(result) {
     });
     app.objects = [];
     app.updateObjectCount();
+
+    await sleep(2000); 
 
     try {
         const response = await fetch(`http://localhost:5000/v1/api/game/${result}/reset`, {
@@ -769,10 +780,57 @@ function updateButtons() {
     }
 }
 
+// Main Menu Functions
+function startGame() {
+    document.getElementById('main-menu').classList.add('hidden');
+    document.getElementById('loading').style.display = 'block';
+    
+    setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+    }, 1000);
+}
+
+function returnToMainMenu() {
+    document.getElementById('main-menu').classList.remove('hidden');
+    // Reset game state
+    if (app) {
+        restartGame('reset');
+    }
+}
+
+function showPanelModal(panel_modal) {
+    const modal = document.getElementById(panel_modal);
+    modal.style.display = 'block';
+    
+    // Close when clicking outside the modal content
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closePanelModal(panel_modal);
+        }
+    });
+}
+
+function closePanelModal(modal) {
+    document.getElementById(modal).style.display = 'none';
+}
+
+function applySettings() {
+    const gameMode = document.getElementById('game-mode-select').value;
+    const gameDifficulty = document.getElementById('difficulty-select').value;
+    
+    app.gameMode = gameMode;
+    app.gameDifficulty = gameDifficulty;
+    
+    closePanelModal("settings-modal");
+}
+
 // Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
+    
     app = new Connect4App();
     const buttons = document.querySelectorAll('.playerButton');
+
+    setupGameModeToggle();
 
     buttons.forEach(button => {
         button.addEventListener('click', (event) => {
