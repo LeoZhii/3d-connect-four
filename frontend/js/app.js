@@ -1,5 +1,5 @@
 // Three.js Application
-class ThreeJSApp {
+class Connect4App {
     constructor() {
         this.scene = null;
         this.camera = null;
@@ -11,6 +11,7 @@ class ThreeJSApp {
         this.fps = 60;
         this.frameCount = 0;
         this.lastTime = 0;
+        this.playerOneTurn = true;
         
         this.init();
         this.setupEventListeners();
@@ -107,25 +108,9 @@ class ThreeJSApp {
         this.scene.add(plane);
     }
     
-    createObject(type, position, color) {
-        let geometry;
-        
-        switch(type) {
-            case 'cube':
-                geometry = new THREE.BoxGeometry(1, 1, 1);
-                break;
-            case 'sphere':
-                geometry = new THREE.SphereGeometry(0.5, 32, 32);
-                break;
-            case 'cone':
-                geometry = new THREE.ConeGeometry(0.5, 1, 32);
-                break;
-            case 'cylinder':
-                geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 32);
-                break;
-            default:
-                geometry = new THREE.BoxGeometry(1, 1, 1);
-        }
+    createObject(position, color) {
+        let geometry = new THREE.SphereGeometry(0.5, 32, 32);
+
         
         const material = new THREE.MeshPhongMaterial({ 
             color: color,
@@ -140,7 +125,7 @@ class ThreeJSApp {
         // Add some animation properties
         mesh.userData = {
             id: Date.now(),
-            type: type,
+            type: 'sphere',
             originalColor: color,
             rotationSpeed: {
                 x: (Math.random() - 0.5) * 0.02,
@@ -162,7 +147,6 @@ class ThreeJSApp {
             
             objects.forEach(obj => {
                 this.createObject(
-                    obj.type,
                     obj.position,
                     obj.color
                 );
@@ -198,18 +182,42 @@ class ThreeJSApp {
             console.warn('Could not add object to API:', error);
         }
     }
+
+    playerMove() {
+        const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
+    
+        const coordinates = document.getElementById('coordinates').value.split(',');
+        const position = { x: coordinates[0], y: coordinates[1], z: coordinates[2] };
+        
+        // Create object in scene
+        this.createObject(position, color);
+        this.updateObjectCount();
+        
+        // Add to API
+        this.addObjectToAPI({
+            type: 'sphere',
+            position: position,
+            color: color
+        });
+    
+        this.playerOneTurn = !this.playerOneTurn;
+    }
     
     setupEventListeners() {
         // Position controls
-        ['posX', 'posY', 'posZ'].forEach(axis => {
-            document.getElementById(axis).addEventListener('input', (e) => {
-                this.updatePositionPreview(e.target.value, axis);
-            });
-        });
+        // ['posX', 'posY', 'posZ'].forEach(axis => {
+        //     document.getElementById(axis).addEventListener('input', (e) => {
+        //         this.updatePositionPreview(e.target.value, axis);
+        //     });
+        // });
         
         // Color control
-        document.getElementById('objectColor').addEventListener('change', (e) => {
-            // Color preview could be added here
+        // document.getElementById('objectColor').addEventListener('change', (e) => {
+        //     // Color preview could be added here
+        // });
+
+        document.getElementById('coordinates').addEventListener('input', (e) => {
+            this.updatePositionPreview(e.target.value, 'coordinates');
         });
     }
     
@@ -292,32 +300,7 @@ class ThreeJSApp {
 
 // Global functions for UI controls
 let app;
-
-function addObject() {
-    const type = document.getElementById('objectType').value;
-    const color = document.getElementById('objectColor').value;
-    const posX = parseFloat(document.getElementById('posX').value);
-    const posY = parseFloat(document.getElementById('posY').value);
-    const posZ = parseFloat(document.getElementById('posZ').value);
-    
-    const position = { x: posX, y: posY, z: posZ };
-    
-    // Create object in scene
-    app.createObject(type, position, color);
-    app.updateObjectCount();
-    
-    // Add to API
-    app.addObjectToAPI({
-        type: type,
-        position: position,
-        color: color
-    });
-    
-    // Reset position controls
-    document.getElementById('posX').value = 0;
-    document.getElementById('posY').value = 0;
-    document.getElementById('posZ').value = 0;
-}
+const buttons = document.querySelectorAll('.playerButton');
 
 function clearScene() {
     app.objects.forEach(obj => {
@@ -336,9 +319,34 @@ function toggleWireframe() {
     });
 }
 
+function updateButton() {
+    if (app.playerOneTurn) {
+        document.getElementById('playerOneButton').style.opacity = '1';
+        document.getElementById('playerTwoButton').style.opacity = '0.5';
+    } else {
+        document.getElementById('playerOneButton').style.opacity = '0.5';
+        document.getElementById('playerTwoButton').style.opacity = '1'; 
+    }
+}
+
 // Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
-    app = new ThreeJSApp();
+    app = new Connect4App();
+    updateButton();
+
+    buttons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
+    
+            if (event.target.value === playerTurn) {
+                app.playerMove();
+            }
+            console.log(`Button clicked: ${event.target.textContent}`);
+            console.log(`Is player one turn: ${app.playerOneTurn}`);
+        });
+    
+        updateButton();
+    });
 });
 
 // Clean up when page unloads
@@ -347,3 +355,4 @@ window.addEventListener('beforeunload', () => {
         app.destroy();
     }
 });
+

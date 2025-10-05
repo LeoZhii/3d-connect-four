@@ -113,9 +113,9 @@
         <div id="canvas-container"></div>
         
         <div id="ui-panel">
-            <h2>🎮 Scene Controls</h2>
+            <h2>Connect 4 🔴 🟡</h2>
             
-            <div class="control-group">
+            <!-- <div class="control-group">
                 <label>Object Type:</label>
                 <select id="objectType">
                     <option value="cube">Cube</option>
@@ -123,14 +123,14 @@
                     <option value="cone">Cone</option>
                     <option value="cylinder">Cylinder</option>
                 </select>
-            </div>
+            </div> -->
             
-            <div class="control-group">
+            <!-- <div class="control-group">
                 <label>Color:</label>
                 <input type="color" id="objectColor" value="#ff6b6b">
-            </div>
+            </div>  -->
             
-            <div class="control-group">
+             <!-- <div class="control-group">
                 <label>Position X:</label>
                 <input type="range" id="posX" min="-10" max="10" value="0" step="0.1">
             </div>
@@ -143,9 +143,15 @@
             <div class="control-group">
                 <label>Position Z:</label>
                 <input type="range" id="posZ" min="-10" max="10" value="0" step="0.1">
+            </div> -->
+
+            <div class="control-group">
+                <label>Coordinates:</label>
+                <input type="text" id="coordinates" value="0,0,0">
             </div>
             
-            <button onclick="addObject()">➕ Add Object</button>
+            <button class="playerButton" id="playerOneButton" value="playerOne">➕ Player 1</button>
+            <button class="PlayerButton" id="playerTwoButton" value="playerTwo">➕ Player 2</button>
             <button onclick="clearScene()">🗑️ Clear Scene</button>
             <button onclick="toggleWireframe()">🔲 Toggle Wireframe</button>
         </div>
