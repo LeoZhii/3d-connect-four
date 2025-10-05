@@ -1,5 +1,12 @@
 // Three.js Application
 class Connect4App {
+    static GAME_STATE = Object.freeze({
+        CONTINUE: 0,
+        PLAYER_1_WIN: 1,
+        PLAYER_2_WIN: 2,
+        DRAW: 3
+      });
+
     constructor() {
         this.scene = null;
         this.camera = null;
@@ -196,14 +203,18 @@ class Connect4App {
             console.log(`Calling createObject with coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
             
              if (updated_coordinates.x == -1 && updated_coordinates.y == -1 && updated_coordinates.z == -1) {
-                this.showInvalidMovePopup();
+                this.displayPopup({
+                    message: '❌ Invalid Move!',
+                    color: '#ff4444'
+                });
              }
             else {
+                updated_coordinates.y += 0.5;
+
                 this.createObject(updated_coordinates, color, true);
                 this.playerOneTurn = !this.playerOneTurn;
                 this.updateObjectCount();
             }
-
 
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
         } catch (error) {
@@ -250,8 +261,7 @@ class Connect4App {
         this.coordinateDots = this.dotGroup.children;
     }
 
-    showInvalidMovePopup() {
-        // Create simple HTML popup
+    displayPopup(popup_content) {
         const popup = document.createElement('div');
         popup.id = 'invalid-move-popup';
         popup.style.cssText = `
@@ -259,7 +269,7 @@ class Connect4App {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #ff4444;
+            background: ${popup_content.color};
             color: white;
             padding: 20px;
             border-radius: 8px;
@@ -273,7 +283,7 @@ class Connect4App {
             transition: opacity 0.3s ease;
         `;
         
-        popup.innerHTML = '❌ Invalid Move!';
+        popup.innerHTML = popup_content.message;
         document.body.appendChild(popup);
         
         // Fade in
