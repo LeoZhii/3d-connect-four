@@ -194,10 +194,16 @@ class Connect4App {
             }
             
             console.log(`Calling createObject with coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
-            this.createObject(updated_coordinates, color, true);
-            this.updateObjectCount();
+            
+             if (updated_coordinates.x == -1 && updated_coordinates.y == -1 && updated_coordinates.z == -1) {
+                this.showInvalidMovePopup();
+             }
+            else {
+                this.createObject(updated_coordinates, color, true);
+                this.playerOneTurn = !this.playerOneTurn;
+                this.updateObjectCount();
+            }
 
-            this.playerOneTurn = !this.playerOneTurn;
 
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
         } catch (error) {
@@ -242,6 +248,48 @@ class Connect4App {
         }
 
         this.coordinateDots = this.dotGroup.children;
+    }
+
+    showInvalidMovePopup() {
+        // Create simple HTML popup
+        const popup = document.createElement('div');
+        popup.id = 'invalid-move-popup';
+        popup.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ff4444;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        `;
+        
+        popup.innerHTML = '❌ Invalid Move!';
+        document.body.appendChild(popup);
+        
+        // Fade in
+        setTimeout(() => {
+            popup.style.opacity = '1';
+        }, 10);
+        
+        // Auto-hide after 2 seconds
+        setTimeout(() => {
+            popup.style.opacity = '0';
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.parentNode.removeChild(popup);
+                }
+            }, 300);
+        }, 2000);
     }
     
     setupEventListeners() {
