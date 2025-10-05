@@ -110,6 +110,15 @@ def check_draw(grid):
     return not np.any(grid == 0)
 
 
+def get_valid_moves():
+    zero_indices = np.argwhere(grid == 0)
+
+    return [
+        {'x': int(idx[0]), 'y': int(idx[2]), 'z': int(idx[1])}
+        for idx in zero_indices
+    ]
+
+
 if __name__ == '__main__':
     print("Starting Three.js Backend Server...")
     print("\nServer running at: http://localhost:5000")
