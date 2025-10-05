@@ -793,7 +793,15 @@ function returnToMainMenu() {
 }
 
 function showInstructions() {
-    document.getElementById('instructions-modal').style.display = 'block';
+    const modal = document.getElementById('instructions-modal');
+    modal.style.display = 'block';
+    
+    // Close when clicking outside the modal content
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeInstructions();
+        }
+    });
 }
 
 function closeInstructions() {
@@ -801,7 +809,15 @@ function closeInstructions() {
 }
 
 function showSettings() {
-    document.getElementById('settings-modal').style.display = 'block';
+    const modal = document.getElementById('settings-modal');
+    modal.style.display = 'block';
+    
+    // Close when clicking outside the modal content
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeSettings();
+        }
+    });
 }
 
 function closeSettings() {
