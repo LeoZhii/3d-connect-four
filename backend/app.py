@@ -34,12 +34,16 @@ def record_player_move(player_id):
         return jsonify({'error': 'Missing x or y coordinate'}), 400
 
     if not (0 <= x < 4 and 0 <= y < 4):
-        return jsonify({'error': 'Coordinates out of bounds (must be 0-3)'}), 400
+        return jsonify({
+        'coordinates': {'x': -1, 'y': -1, 'z': -1},
+        'state': State.INVALID_MOVE
+    }), 201
 
     column = grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
     if len(empty_positions) == 0:
         response = {
+            'coordinates': {'x': -1, 'y': -1, 'z': -1},
             'state': State.INVALID_MOVE
         }
         return jsonify(response), 200
@@ -121,6 +125,5 @@ def get_valid_moves():
 
 if __name__ == '__main__':
     print("Starting Three.js Backend Server...")
-    print("\nServer running at: http://localhost:5000")
 
-    app.run(debug=True, host='0.0.0.0', port=5050)
+    app.run(debug=True, host='0.0.0.0', port=1234)

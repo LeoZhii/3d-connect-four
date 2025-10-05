@@ -1,6 +1,7 @@
 // Three.js Application
 class Connect4App {
-    static GAME_STATE = Object.freeze({
+    static STATE = Object.freeze({
+        INVALID_MOVE: -1,
         CONTINUE: 0,
         PLAYER_1_WIN: 1,
         PLAYER_2_WIN: 2,
@@ -147,27 +148,9 @@ class Connect4App {
 
         this.scene.add(mesh);
         this.objects.push(mesh);
+        this.updateObjectCount();
 
         return mesh;
-    }
-    
-    async addObjectToAPI(objectData) {
-        try {
-            const response = await fetch('http://localhost:5050/api/objects', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(objectData)
-            });
-            
-            if (response.ok) {
-                const newObject = await response.json();
-                console.log('Object added to API:', newObject);
-            }
-        } catch (error) {
-            console.warn('Could not add object to API:', error);
-        }
     }
 
     async playerMove() {
@@ -179,7 +162,7 @@ class Connect4App {
         const playerId = (this.playerOneTurn) ? 1 : 2;
 
         try {
-            const response = await fetch(`http://localhost:5050/v1/api/players/${playerId}/moves`, {
+            const response = await fetch(`http://localhost:5000/v1/api/players/${playerId}/moves`, {
                 method: 'POST', // Specify the method
                 headers: {
                     "Content-Type": "application/json",
@@ -192,6 +175,7 @@ class Connect4App {
             // 2. The server's response body will be JSON, parse it
             const response_json = await response.json();
             const updated_coordinates = response_json.coordinates;
+            const state = response_json.state;
     
             // 3. Handle non-successful HTTP status codes (e.g., 400, 500)
             if (!response.ok) {
@@ -202,23 +186,56 @@ class Connect4App {
                 throw new Error(`Move failed: ${errorMessage}`);
             }
             
+            console.log(`State: ${state}`);
             console.log(`Calling createObject with coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
-            
-             if (updated_coordinates.x == -1 && updated_coordinates.y == -1 && updated_coordinates.z == -1) {
-                this.displayPopup({
-                    message: '❌ Invalid Move!',
-                    color: '#ff4444'
-                });
-             }
-            else {
-                updated_coordinates.y += 0.5;
+            updated_coordinates.y += 0.5;
 
-                this.createObject(updated_coordinates, color, true);
-                this.playerOneTurn = !this.playerOneTurn;
-                this.updateObjectCount();
+            switch (state) {
+                case Connect4App.STATE.INVALID_MOVE: {
+                    this.displayPopup({
+                        message: '❌ Invalid Move!',
+                        color: '#ff4444'
+                    });
+                    break;
+                }
+                case Connect4App.STATE.PLAYER_1_WIN: {
+                    this.createObject(updated_coordinates, color, true);
+                    this.playerOneTurn = !this.playerOneTurn;
+                    
+                    this.displayPopup({
+                        message: '🎉 Player 1 Wins!',
+                        color: '#4CAF50'
+                    });
+                    break;
+                }
+                case Connect4App.STATE.PLAYER_2_WIN: {
+                    this.createObject(updated_coordinates, color, true);
+                    this.playerOneTurn = !this.playerOneTurn;
+
+                    this.displayPopup({
+                        message: '🎉 Player 2 Wins!',
+                        color: '#4CAF50'
+                    });
+                    break;
+                }
+                case Connect4App.STATE.DRAW: {
+                    this.createObject(updated_coordinates, color, true);
+                    this.playerOneTurn = !this.playerOneTurn;
+
+                    this.displayPopup({
+                        message: '🎉 Draw!',
+                        color: '#4CAF50'
+                    });
+                    break;
+                }
+                case Connect4App.STATE.CONTINUE: {
+                    this.createObject(updated_coordinates, color, true);
+                    this.playerOneTurn = !this.playerOneTurn;
+                }
             }
-
+            
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
+            
         } catch (error) {
             // 5. Handle network errors (e.g., server unreachable) or errors thrown above
             console.error('An error occurred during the fetch operation:', error.message);
