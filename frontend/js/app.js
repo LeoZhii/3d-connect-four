@@ -201,7 +201,7 @@ class Connect4App {
                 case Connect4App.STATE.PLAYER_1_WIN: {
                     this.createObject(updated_coordinates, color, true);
                     this.playerOneTurn = !this.playerOneTurn;
-                    
+
                     this.displayPopup({
                         message: '🎉 Player 1 Wins!',
                         color: '#4CAF50'
@@ -301,6 +301,98 @@ class Connect4App {
         document.getElementById('coordinates').addEventListener('input', (e) => {
             this.updatePositionPreview(e.target.value, 'coordinates');
         });
+
+        // Make UI panel draggable
+        this.setupDraggablePanel();
+    }
+
+    setupDraggablePanel() {
+        const panel = document.getElementById('ui-panel');
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        panel.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        function dragStart(e) {
+            // Only start dragging if clicking on the drag handle or the panel itself
+            if (e.target.classList.contains('drag-handle') || e.target === panel) {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+
+                if (e.target === panel || e.target.classList.contains('drag-handle')) {
+                    isDragging = true;
+                    panel.classList.add('dragging');
+                }
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                // No constraints - allow dragging beyond viewport edges
+                panel.style.left = xOffset + 'px';
+                panel.style.top = yOffset + 'px';
+            }
+        }
+
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            panel.classList.remove('dragging');
+        }
+
+        // Touch support for mobile
+        panel.addEventListener('touchstart', dragStartTouch);
+        document.addEventListener('touchmove', dragTouch);
+        document.addEventListener('touchend', dragEndTouch);
+
+        function dragStartTouch(e) {
+            if (e.target.classList.contains('drag-handle') || e.target === panel) {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+
+                if (e.target === panel || e.target.classList.contains('drag-handle')) {
+                    isDragging = true;
+                    panel.classList.add('dragging');
+                }
+            }
+        }
+
+        function dragTouch(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                // No constraints - allow dragging beyond viewport edges
+                panel.style.left = xOffset + 'px';
+                panel.style.top = yOffset + 'px';
+            }
+        }
+
+        function dragEndTouch(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+            panel.classList.remove('dragging');
+        }
     }
     
     updatePositionPreview(value, axis) {

@@ -35,6 +35,37 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
             min-width: 250px;
+            cursor: move;
+            user-select: none;
+        }
+        
+        #ui-panel.dragging {
+            cursor: grabbing;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .drag-handle {
+            width: calc(100% + 40px);
+            height: 30px;
+            margin: -20px -20px 15px -20px;
+            border-radius: 10px 10px 0 0;
+            background: rgba(0, 0, 0, 0.1);
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+        
+        .drag-handle:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
         }
         
         #ui-panel h2 {
@@ -113,6 +144,7 @@
         <div id="canvas-container"></div>
         
         <div id="ui-panel">
+            <div class="drag-handle">⋮⋮ Drag to Move ⋮⋮</div>
             <h2>Connect 4 🔴 🟡</h2>
             
             <!-- <div class="control-group">
@@ -152,7 +184,7 @@
             
             <button class="playerButton" id="playerOneButton" value="playerOne">➕ Player 1</button>
             <button class="playerButton" id="playerTwoButton" value="playerTwo">➕ Player 2</button>
-            <button onclick="clearScene()">🗑️ Clear Scene</button>
+            <button onclick="clearScene()">Restart Game</button>
             <button onclick="toggleWireframe()">🔲 Toggle Wireframe</button>
         </div>
         
