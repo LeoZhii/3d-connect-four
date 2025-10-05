@@ -5,7 +5,7 @@ from flask_cors import CORS
 import numpy as np
 import itertools
 from state import State
-from game_funcs import GAME_DATA
+from game_funcs import game_data
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
@@ -19,7 +19,7 @@ game_result = {
 
 @app.route('/v1/api/game/<string:result>/reset', methods=['POST'])
 def reset_game(result):
-    global GAME_DATA, game_result
+    global game_data, game_result
 
     if result == 'player1' or result == 'player2':
         game_result[result + '_score'] += 1
@@ -27,14 +27,14 @@ def reset_game(result):
     if result != 'none' and result != 'reset':
         game_result['num_games'] += 1
 
-    GAME_DATA.grid = np.zeros((4, 4, 5), dtype=int)
-    GAME_DATA.moves = []
+    game_data.grid = np.zeros((4, 4, 5), dtype=int)
+    game_data.moves = []
 
     return jsonify(game_result), 200
 
 @app.route('/v1/api/game/is_move_valid', methods=['POST'])
 def is_move_valid():
-    global GAME_DATA, game_result
+    global game_data, game_result
 
     if not request.is_json:
         return jsonify({'error': 'Request is not json!'}), 400
@@ -57,7 +57,7 @@ def is_move_valid():
         }), 201
 
     # checks if column is full 
-    column = GAME_DATA.grid[x, y, :]
+    column = game_data.grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
     if len(empty_positions) == 0:
         response = {
@@ -76,7 +76,7 @@ def is_move_valid():
 
 @app.route('/v1/api/players/<int:player_id>/moves', methods=['POST'])
 def record_player_move(player_id):
-    global GAME_DATA, game_result
+    global game_data, game_result
 
     if player_id != 1 and player_id != 2:
         return jsonify({'error': 'Invalid player_id'}), 400
@@ -95,27 +95,28 @@ def record_player_move(player_id):
     if x is None or y is None:
         return jsonify({'error': 'Missing x or y coordinate'}), 400
 
-    column = GAME_DATA.grid[x, y, :]
+    column = game_data.grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
  
     z = int(empty_positions[0])
-    GAME_DATA.grid[x, y, z] = player_id
+    game_data.grid[x, y, z] = player_id
 
     move = {
         'player_id': player_id,
-        'turn': GAME_DATA.turn,
+        'turn': game_data.turn,
         'coordinates': [x, y, z]
     }
-    GAME_DATA.moves.append(move)
-    GAME_DATA.turn += 1
+    game_data.moves.append(move)
+    game_data.turn += 1
 
     state = State.CONTINUE
-    winner = GAME_DATA.get_result(x, y, z, player_id)
+    move_result = game_data.get_result(x, y, z, player_id)
 
-    if winner == 0.5: #draw
+    if move_result == 0.5: #draw
         state = State.DRAW
         game_result['state'] = State.DRAW
-    elif winner == 1: #win
+    elif move_result == 1 or move_result == 0: 
+        # someone won and someone lost, we only care *IF* someone won
         state = player_id
         game_result['state'] = player_id 
     # else: #loss 

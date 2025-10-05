@@ -3,7 +3,7 @@
 ### returns best move after running all simulations
 
 import math, random, copy
-from game_funcs import GAME_DATA
+from game_funcs import game_data
 
 class Node: 
     def __init__(self, state, parent=None, move=None, player=None):
@@ -67,17 +67,20 @@ class MCTS:
     def _simulate(self, state, player, game):
         #simulate random play until terminal
         current_player = player
-                sim_state = copy.deepcopy(state)
+        sim_state = copy.deepcopy(state)
         while not game.is_terminal(sim_state):
-            moves = game.get_valid_moves(sim_state)
-            move = random.choice(moves)
-            sim_state = game.make_move(sim_state, move, current_player)
+            valid_moves = game.get_valid_moves(sim_state)
+            last_move = random.choice(valid_moves)
+            sim_state = game.make_move(sim_state, last_move, current_player)
+            winner_id = current_player 
             current_player = game.get_opponent(current_player)
-        result = game.get_result(sim_state, current_player)
+        result = game.get_result(*last_move, player_id, grid=sim_state)
         if result == 0.5: return result
         # return w/l based off of starting player 
-        if current_player != player:
-            return 0 if result == 1 else return 1 
+        if winner_id == player: 
+            return 1 # Root player won
+        else:
+            return 0 # Root player lost 
 
     def _backpropagate(self, node, reward):
         while node:
@@ -87,8 +90,8 @@ class MCTS:
 
 ## for testing algor should return a move
 if __name__ == "__main__":
-    game = game.DummyGame()
-    board = [0] * 9
-    mcts = MCTS(simulations=100)
+    game = game_data
+    board = game.grid
+    mcts = MCTS(simulations=8)
     move = mcts.best_move(board, player=1, game=game)
-    print(f"Best move chosen: {move}") 
+    print(f"Best move chosen: {move}")

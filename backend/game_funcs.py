@@ -3,7 +3,7 @@ import random
 import numpy as np
 import itertools
 
-class game_data:
+class game_data_class:
     def __init__(self):
         self.terminal = False #is the game over
         self.grid = np.zeros((4, 4, 5), dtype=int)
@@ -11,13 +11,16 @@ class game_data:
         self.moves = []
 
     # returns 1 for win, 0.5 for draw in perspective of the player
-    def get_result(self, x, y, z, player_id):
+    def get_result(self, x, y, z, player_id, grid = None):
+        if grid is None:
+            grid = self.grid
+
         elements = [0, 1, -1]
         directions = list(itertools.product(elements, repeat=3))[1:]
 
         # check for draw
-        if not np.any(self.grid==0):
-            terminal = True
+        if not np.any(grid==0):
+            self.terminal = True
             return 0.5
 
         for dx, dy, dz in directions:
@@ -26,7 +29,7 @@ class game_data:
             for i in range(1, 4):
                 nx, ny, nz = x + dx*i, y + dy*i, z + dz*i
                 if 0 <= nx < 4 and 0 <= ny < 4 and 0 <= nz < 5:
-                    if self.grid[nx, ny, nz] == player_id:
+                    if grid[nx, ny, nz] == player_id:
                         count += 1
                     else:
                         break
@@ -44,19 +47,18 @@ class game_data:
                     break
 
             if count >= 4:
-                terminal = True 
+                self.terminal = True 
                 return 1 #win 
 
         return None 
 
-    def is_terminal(self):
-        return terminal 
+    def is_terminal(self, node_state):
+        return self.terminal 
 
     def get_opponent(self, current_player):
         return 1 if current_player == 2 else 2
 
-
-    def get_valid_moves(self):
+    def get_valid_moves(self, node_state):
         # to be valid, coordinate must be empty and apease gravity
         zero_indices = np.argwhere(self.grid == 0)
 
@@ -71,10 +73,10 @@ class game_data:
         return valid_moves
 
     def make_move(self, state, move, player):
-        state[move] = player
+        state[move['x'], move['y'], move['z']] = player
         return state
 
-GAME_DATA = game_data() 
+game_data = game_data_class() 
 
 
 # class DummyGame:
