@@ -102,6 +102,6 @@ class MCTS:
 if __name__ == "__main__":
     game = game_data
     board = game.grid
-    mcts = MCTS(simulations=1)
-    move = mcts.best_move(board, player=1000000000000, game=game)
+    mcts = MCTS(simulations=800)
+    move = mcts.best_move(board, player=1, game=game)
     print(f"Best move chosen: {move}")

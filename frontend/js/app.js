@@ -27,6 +27,7 @@ class Connect4App {
         this.currentTempObject = null;
         this.gameMode = 'pvp';
         this.gameDifficulty = 'easy';
+        this.playerOrder = 'PlayerFirst';
 
         this.init();
         this.setupEventListeners();
@@ -214,13 +215,90 @@ class Connect4App {
         }        
     }
 
+    async aiMove(color) {
+        const playerId = (app.playerOneTurn) ? 1 : 2;
+
+        let response = await fetch(`http://localhost:5000/v1/api/ai/${playerId}/moves`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({}),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+        }
+
+        const response_json = await response.json();
+        const updated_coordinates = response_json.coordinates;
+        const state = response_json.state;
+
+        updated_coordinates.x *= 1.5;
+        updated_coordinates.y *= 1.5;
+        updated_coordinates.z *= 1.5;
+
+        switch (state) {
+            case Connect4App.STATE.INVALID_MOVE: {
+                this.displayPopup({
+                    message: '❌ Invalid Move!',
+                    color: '#ff4444'
+                });
+                break;
+            }
+             case Connect4App.STATE.PLAYER_1_WIN: {
+                 this.createObject(updated_coordinates, color, true);
+                 this.playerOneTurn = !this.playerOneTurn;
+
+                 this.displayPopup({
+                     message: '🎉 Player 1 Wins!',
+                     color: '#4CAF50'
+                 });
+
+                 restartGame('player1');
+
+                 break;
+             }
+             case Connect4App.STATE.PLAYER_2_WIN: {
+                 this.createObject(updated_coordinates, color, true);
+                 this.playerOneTurn = !this.playerOneTurn;
+
+                 this.displayPopup({
+                     message: '🎉 Player 2 Wins!',
+                     color: '#4CAF50'
+                 });
+
+                 restartGame('player2');
+
+                 break;
+             }
+             case Connect4App.STATE.DRAW: {
+                 this.createObject(updated_coordinates, color, true);
+                 this.playerOneTurn = !this.playerOneTurn;
+
+                 this.displayPopup({
+                     message: '🤝 Draw!',
+                     color: '#4CAF50'
+                 });
+
+                 restartGame('draw');
+
+                 break;
+             }
+            case Connect4App.STATE.CONTINUE: {
+                this.createObject(updated_coordinates, color, true);
+                this.playerOneTurn = !this.playerOneTurn;
+            }
+        }
+    }
+
     async playerMove() {
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
     
         // const coordinates = document.getElementById('coordinates').value.split(',');
         // const position = { x: coordinates[0], y: coordinates[1] };
         
-        const playerId = (this.playerOneTurn) ? 1 : 2;
+        const playerId = (this.playerOneTurn) ? 1 : 2; 
 
         try {
             const response = await fetch(`http://localhost:5000/v1/api/players/${playerId}/moves`, {
@@ -305,6 +383,16 @@ class Connect4App {
                 case Connect4App.STATE.CONTINUE: {
                     this.createObject(updated_coordinates, color, true);
                     this.playerOneTurn = !this.playerOneTurn;
+
+                    console.log(app.gameMode);
+
+                    if (app.gameMode === 'pvai') {
+                        console.log('AI Move');
+
+                        let ai_color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
+                        await this.aiMove(ai_color);
+                        return;
+                    }
                 }
             }
                         
@@ -756,7 +844,7 @@ function updateButtons() {
 }
 
 // Main Menu Functions
-function startGame() {
+async function startGame() {
     document.getElementById('main-menu').classList.add('hidden');
     document.getElementById('loading').style.display = 'block';
     
@@ -765,6 +853,16 @@ function startGame() {
     }, 1000);
 
     restartGame('none');
+    const request = await fetch(`http://localhost:5000/v1/api/ai/difficulty/${app.gameDifficulty}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!request.ok) {
+        throw new Error(`HTTP Error ${request.status}: ${request.statusText}`);
+    }
 }
 
 function returnToMainMenu() {
@@ -778,6 +876,7 @@ function returnToMainMenu() {
 function  setupGameModeToggle() {
     const gameModeSelect = document.getElementById('game-mode-select');
     const difficultySelect = document.getElementById('difficulty-select');
+    const playerOrderSelect = document.getElementById('player-order-select');
     
     // Function to toggle difficulty select based on game mode
     function toggleDifficultySelect() {
@@ -786,10 +885,17 @@ function  setupGameModeToggle() {
             difficultySelect.style.opacity = '0.5';
             difficultySelect.style.cursor = 'not-allowed';
 
+            playerOrderSelect.disabled = true;
+            playerOrderSelect.style.opacity = '0.5';
+            playerOrderSelect.style.cursor = 'not-allowed';
         } else {
             difficultySelect.disabled = false;
             difficultySelect.style.opacity = '1';
             difficultySelect.style.cursor = 'pointer';
+
+            playerOrderSelect.disabled = false;
+            playerOrderSelect.style.opacity = '1';
+            playerOrderSelect.style.cursor = 'pointer';
         }
     }
     
@@ -819,10 +925,12 @@ function closePanelModal(modal) {
 function applySettings() {
     const gameMode = document.getElementById('game-mode-select').value;
     const gameDifficulty = document.getElementById('difficulty-select').value;
+    const playerOrder = document.getElementById('player-order-select').value;
     
     app.gameMode = gameMode;
     app.gameDifficulty = gameDifficulty;
-    
+    app.playerOrder = playerOrder;
+
     closePanelModal("settings-modal");
 }
 
