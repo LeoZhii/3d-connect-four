@@ -15,7 +15,7 @@ class Connect4App {
         
         this.init();
         this.setupEventListeners();
-        this.loadObjectsFromAPI();
+        // this.loadObjectsFromAPI();
     }
     
     init() {
@@ -183,11 +183,44 @@ class Connect4App {
         }
     }
 
-    playerMove() {
+    async playerMove() {
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
     
         const coordinates = document.getElementById('coordinates').value.split(',');
         const position = { x: coordinates[0], y: coordinates[1], z: coordinates[2] };
+        
+        const playerId = (this.playerOneTurn) ? 1 : 2;
+
+        try {
+            const response = await fetch(`http://localhost:5000/v1/api/players/${playerId}/moves`, {
+                method: 'POST', // Specify the method
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "coordinates_2d": [position.x, position.y]
+                }),
+            });
+    
+            // 2. The server's response body will be JSON, parse it
+            const updated_coordinates = await response.json();
+    
+            // 3. Handle non-successful HTTP status codes (e.g., 400, 500)
+            if (!response.ok) {
+                // The server returns an object like: {'error': 'Missing x or y coordinate'}
+                const errorMessage = result.error || 'Unknown server error.';
+                console.error(`HTTP Error ${response.status}: ${errorMessage}`);
+                // Throw an error to be caught by the outer catch block
+                throw new Error(`Move failed: ${errorMessage}`);
+            }
+    
+            this.createObject(updated_coordinates, color);
+    
+        } catch (error) {
+            // 5. Handle network errors (e.g., server unreachable) or errors thrown above
+            console.error('An error occurred during the fetch operation:', error.message);
+            throw error; // Re-throw the error for the caller to handle
+        }
         
         // Create object in scene
         this.createObject(position, color);
