@@ -3,7 +3,7 @@
 ### returns best move after running all simulations
 
 import math, random, copy
-import game
+from game_funcs import GAME_DATA
 
 class Node: 
     def __init__(self, state, parent=None, move=None, player=None):

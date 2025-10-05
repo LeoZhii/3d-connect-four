@@ -1,16 +1,14 @@
+# API endpoints for the game state
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import numpy as np
 import itertools
 from state import State
+from game_funcs import GAME_DATA
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
-
-grid = np.zeros((4, 4, 5), dtype=int)
-turn = 1
-moves = []
-terminal = False #is the game over
 
 game_result = {
     'state': None,
@@ -21,7 +19,7 @@ game_result = {
 
 @app.route('/v1/api/game/<string:result>/reset', methods=['POST'])
 def reset_game(result):
-    global grid, moves, game_result
+    global GAME_DATA, game_result
 
     if result == 'player1' or result == 'player2':
         game_result[result + '_score'] += 1
@@ -29,14 +27,14 @@ def reset_game(result):
     if result != 'none' and result != 'reset':
         game_result['num_games'] += 1
 
-    grid = np.zeros((4, 4, 5), dtype=int)
-    moves = []
+    GAME_DATA.grid = np.zeros((4, 4, 5), dtype=int)
+    GAME_DATA.moves = []
 
     return jsonify(game_result), 200
 
 @app.route('/v1/api/game/is_move_valid', methods=['POST'])
 def is_move_valid():
-    global turn, grid, moves, game_result
+    global GAME_DATA, game_result
 
     if not request.is_json:
         return jsonify({'error': 'Request is not json!'}), 400
@@ -59,7 +57,7 @@ def is_move_valid():
         }), 201
 
     # checks if column is full 
-    column = grid[x, y, :]
+    column = GAME_DATA.grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
     if len(empty_positions) == 0:
         response = {
@@ -78,7 +76,7 @@ def is_move_valid():
 
 @app.route('/v1/api/players/<int:player_id>/moves', methods=['POST'])
 def record_player_move(player_id):
-    global turn, grid, moves, game_result
+    global GAME_DATA, game_result
 
     if player_id != 1 and player_id != 2:
         return jsonify({'error': 'Invalid player_id'}), 400
@@ -97,22 +95,22 @@ def record_player_move(player_id):
     if x is None or y is None:
         return jsonify({'error': 'Missing x or y coordinate'}), 400
 
-    column = grid[x, y, :]
+    column = GAME_DATA.grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
  
     z = int(empty_positions[0])
-    grid[x, y, z] = player_id
+    GAME_DATA.grid[x, y, z] = player_id
 
     move = {
         'player_id': player_id,
-        'turn': turn,
+        'turn': GAME_DATA.turn,
         'coordinates': [x, y, z]
     }
-    moves.append(move)
-    turn += 1
+    GAME_DATA.moves.append(move)
+    GAME_DATA.turn += 1
 
     state = State.CONTINUE
-    winner = get_result(x, y, z, player_id)
+    winner = GAME_DATA.get_result(x, y, z, player_id)
 
     if winner == 0.5: #draw
         state = State.DRAW
@@ -129,68 +127,6 @@ def record_player_move(player_id):
         'state': state
     }
     return jsonify(response), 201
-
-# returns 1 for win, 0.5 for draw in perspective of the player
-def get_result(x, y, z, player_id):
-    elements = [0, 1, -1]
-    directions = list(itertools.product(elements, repeat=3))[1:]
-
-    # check for draw
-    if not np.any(grid==0):
-        terminal = True
-        return 0.5
-
-    for dx, dy, dz in directions:
-        count = 1
-
-        for i in range(1, 4):
-            nx, ny, nz = x + dx*i, y + dy*i, z + dz*i
-            if 0 <= nx < 4 and 0 <= ny < 4 and 0 <= nz < 5:
-                if grid[nx, ny, nz] == player_id:
-                    count += 1
-                else:
-                    break
-            else:
-                break
-
-        for i in range(1, 4):
-            nx, ny, nz = x - dx*i, y - dy*i, z - dz*i
-            if 0 <= nx < 4 and 0 <= ny < 4 and 0 <= nz < 5:
-                if grid[nx, ny, nz] == player_id:
-                    count += 1
-                else:
-                    break
-            else:
-                break
-
-        if count >= 4:
-            terminal = True 
-            return 1 #win 
-
-    return None 
-
-
-def is_terminal(grid):
-    return terminal 
-
-def get_opponent(current_player):
-    return 1 if current_player == 2 else 2
-
-
-def get_valid_moves(grid):
-    # to be valid, coordinate must be empty and apease gravity
-    zero_indices = np.argwhere(grid == 0)
-
-    valid_moves = []
-    for idx in zero_indices:
-        x, y, z = idx[0], idx[1], idx[2]
-
-        # check if z is 0 OR space directly below is NOT empty to be valid
-        if z == 0 or grid[x, y, z-1] != 0:
-            valid_moves.append({'x': int(x), 'y': int(y), 'z': int(z)})
-        
-    return valid_moves
-
 
 if __name__ == '__main__':
     print("Starting Three.js Backend Server...")

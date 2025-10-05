@@ -354,7 +354,7 @@ class Connect4App {
                     popup.parentNode.removeChild(popup);
                 }
             }, 300);
-        }, 500);
+        }, 2000);
     }
 
     // Add interactive gridlines
@@ -690,7 +690,7 @@ async function restartGame(result) {
     }
 
     if (result != 'none' && result != 'reset') {
-        sleep(2000); 
+        await sleep(2000); 
     }
 
     app.objects.forEach(obj => {
