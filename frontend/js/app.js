@@ -180,6 +180,20 @@ class Connect4App {
 
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
 
+        // Update confirm button styling based on current turn
+        const confirmButton = document.getElementById('confirmMoveButton');
+        if (confirmButton) {
+            // Add animated-border class if not already present
+            if (!confirmButton.classList.contains('animated-border')) {
+                confirmButton.classList.add('animated-border');
+            }
+            
+            // Update CSS custom property for border gradient based on turn
+            const gradientColor = app.playerOneTurn ? '#FF0000' : '#FFFF00'; 
+            const gradient = `conic-gradient(from 0deg, transparent, ${gradientColor}, transparent)`;
+            confirmButton.style.setProperty('--border-gradient', gradient);
+        }
+
         const response = await fetch(`http://localhost:5000/v1/api/game/is_move_valid`, {
             method: 'POST',
             headers: {
@@ -392,6 +406,14 @@ class Connect4App {
                         let ai_color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
                         await this.aiMove(ai_color);
                         return;
+                    }
+
+                    const confirmButton = document.getElementById('confirmMoveButton');
+                    if (confirmButton) {
+                        // Add animated-border class if not already present
+                        if (confirmButton.classList.contains('animated-border')) {
+                            confirmButton.classList.remove('animated-border');
+                        }
                     }
                 }
             }

@@ -407,7 +407,7 @@ button:hover {
     right: 0;
     bottom: 0;
     z-index: -1;
-    background: conic-gradient(from 0deg, transparent, #1976ed, transparent);
+    background: var(--border-gradient);
     border-radius: inherit;
     animation: rotate 4s linear infinite;
 }
