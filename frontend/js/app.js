@@ -151,7 +151,7 @@ class Connect4App {
     
     async addObjectToAPI(objectData) {
         try {
-            const response = await fetch('http://localhost:5000/api/objects', {
+            const response = await fetch('http://localhost:5050/api/objects', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -177,7 +177,7 @@ class Connect4App {
         const playerId = (this.playerOneTurn) ? 1 : 2;
 
         try {
-            const response = await fetch(`http://localhost:5000/v1/api/players/${playerId}/moves`, {
+            const response = await fetch(`http://localhost:5050/v1/api/players/${playerId}/moves`, {
                 method: 'POST', // Specify the method
                 headers: {
                     "Content-Type": "application/json",
