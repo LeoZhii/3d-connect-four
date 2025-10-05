@@ -59,7 +59,7 @@ def record_player_move(player_id):
     winner = check_winner(x, y, z, player_id)
 
     response = {
-        'coordinates': [x, y, z],
+        'coordinates': {'x':x, 'y':y, 'z':z},
         'winner': winner
     }
     return jsonify(response), 201
