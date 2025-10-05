@@ -24,6 +24,7 @@ class Connect4App {
         this.player2Score = 0;
         this.gamesPlayed = 0;
         this.inSession = false;
+        this.currentTempObject = null;
         this.gameMode = 'pvp';
         this.gameDifficulty = 'easy';
 
@@ -127,12 +128,21 @@ class Connect4App {
         this.scene.add(plane);
     }
 
-    createObject(position, color, animateGravity = false) {
+    createObject(position, color, animateGravity = false, hollow = false) {
         let geometry = new THREE.SphereGeometry(0.5, 32, 32);
         const material = new THREE.MeshPhongMaterial({
             color: color,
-            shininess: 100
+            shininess: 100,
         });
+
+        if (hollow) {
+            material.transparent = true;
+            material.opacity = 0.5; 
+            material.wireframe = true;
+            material.polygonOffset = true;
+            material.polygonOffsetFactor = 1;
+            material.polygonOffsetUnits = 1;
+        }        
 
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(position.x, animateGravity ? 10 : position.y, position.z);
@@ -161,7 +171,50 @@ class Connect4App {
         return mesh;
     }
 
-    async playerMove(x, z) {
+    async checkMoveValidity(x, z) {
+        if (this.currentTempObject) {
+            this.scene.remove(this.currentTempObject);
+            this.currentTempObject = null;
+        }
+
+        const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
+
+        const response = await fetch(`http://localhost:5000/v1/api/game/is_move_valid`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                // "coordinates_2d": [position.x, position.y]
+                "coordinates_2d": [x, z]
+            }),
+        });
+
+        if (!response.ok) {
+            const errorMessage = result.error || 'Unknown server error.';
+            console.error(`HTTP Error ${response.status}: ${errorMessage}`);
+            // Throw an error to be caught by the outer catch block
+            throw new Error(`Move failed: ${errorMessage}`);
+        }
+
+        const response_json = await response.json();
+        let response_coordinates = response_json.coordinates;
+        response_coordinates.x *= 1.5;
+        response_coordinates.y *= 1.5;
+        response_coordinates.z *= 1.5;
+
+        if (response_json.state === Connect4App.STATE.INVALID_MOVE) {
+            this.displayPopup({
+                message: '❌ Invalid Move!',
+                color: '#ff4444'
+            });
+        }
+        else {
+            this.currentTempObject = this.createObject(response_coordinates, color, false, true);
+        }        
+    }
+
+    async playerMove() {
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
     
         // const coordinates = document.getElementById('coordinates').value.split(',');
@@ -177,7 +230,7 @@ class Connect4App {
                 },
                 body: JSON.stringify({
                     // "coordinates_2d": [position.x, position.y]
-                    "coordinates_2d": [x, z]
+                    "coordinates_2d": [this.currentTempObject.position.x/1.5, this.currentTempObject.position.z/1.5]
                 }),
             });
     
@@ -192,14 +245,15 @@ class Connect4App {
             const response_json = await response.json();
             const updated_coordinates = response_json.coordinates;
             const state = response_json.state;
-            
-            console.log(`State: ${state}`);
-            console.log(`Callling createObject with coordinates: ${x}, ${z}`);
-            console.log(`Calling createObject with updated coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
-            
+                        
             updated_coordinates.x *= 1.5;
             updated_coordinates.y *= 1.5;
             updated_coordinates.z *= 1.5;
+
+            if (this.currentTempObject) {
+                this.scene.remove(this.currentTempObject);
+                this.currentTempObject = null;
+            }
             
             switch (state) {
                 case Connect4App.STATE.INVALID_MOVE: {
@@ -368,11 +422,11 @@ class Connect4App {
                 if (cellData) {
                     console.log(`Clicked column at matrix position: (${cellData.x}, ${cellData.z})`);
                 }
-                this.playerMove(this.highlightedColumn.x, this.highlightedColumn.z).then(() => {
+                this.checkMoveValidity(this.highlightedColumn.x, this.highlightedColumn.z).then(() => {
                     // updateButtons();
                 })
                 .catch(error => {
-                    console.error("Error occurred while making player move:", error);
+                    console.error("Error occurred while checking move validity:", error);
                 });
             }
         });
@@ -408,18 +462,19 @@ class Connect4App {
         
         // Initialize scoreboard
         this.updateScoreboard();
+
+        const dragabbles = [document.getElementById('scoreboard'), document.getElementById('info-panel')];
         
         // Make scoreboard draggable (with small delay to ensure DOM is ready)
         setTimeout(() => {
-            this.setupDraggableScoreboard();
+            for (let dragabble of dragabbles) {
+                this.setupDraggable(dragabble);
+            }
         }, 100);
                 
     }
     
-  
-
-    setupDraggableScoreboard() {
-        const scoreboard = document.getElementById('scoreboard');
+    setupDraggable(dragabble) {
         let isDragging = false;
         let currentX;
         let currentY;
@@ -427,18 +482,35 @@ class Connect4App {
         let initialY;
         
         // Initialize position from CSS
-        const rect = scoreboard.getBoundingClientRect();
+        const rect = dragabble.getBoundingClientRect();
         let xOffset = rect.left;
         let yOffset = rect.top;
+        
+        // Convert bottom positioning to top positioning for info panel
+        if (dragabble.id === 'info-panel') {
+            const computedStyle = window.getComputedStyle(dragabble);
+            if (computedStyle.bottom !== 'auto') {
+                // Convert bottom position to top position
+                const bottomValue = parseInt(computedStyle.bottom);
+                yOffset = window.innerHeight - bottomValue - rect.height;
+                dragabble.style.top = yOffset + 'px';
+                dragabble.style.bottom = 'auto';
+            }
+        }
 
         const dragStart = (e) => {
-            if (e.target.classList.contains('drag-handle') || e.target === scoreboard) {
+            if (e.target.classList.contains('drag-handle') || e.target === dragabble) {
                 initialX = e.clientX - xOffset;
                 initialY = e.clientY - yOffset;
 
-                if (e.target === scoreboard || e.target.classList.contains('drag-handle')) {
+                if (e.target === dragabble || e.target.classList.contains('drag-handle')) {
                     isDragging = true;
-                    scoreboard.classList.add('dragging');
+                    dragabble.classList.add('dragging');
+                    
+                    // Clear conflicting CSS positioning properties
+                    dragabble.style.right = 'auto';
+                    dragabble.style.bottom = 'auto';
+                    
                     e.preventDefault();
                 }
             }
@@ -453,8 +525,8 @@ class Connect4App {
                 xOffset = currentX;
                 yOffset = currentY;
 
-                scoreboard.style.left = xOffset + 'px';
-                scoreboard.style.top = yOffset + 'px';
+                dragabble.style.left = xOffset + 'px';
+                dragabble.style.top = yOffset + 'px';
             }
         };
 
@@ -463,18 +535,23 @@ class Connect4App {
                 initialX = currentX;
                 initialY = currentY;
                 isDragging = false;
-                scoreboard.classList.remove('dragging');
+                dragabble.classList.remove('dragging');
             }
         };
 
         const dragStartTouch = (e) => {
-            if (e.target.classList.contains('drag-handle') || e.target === scoreboard) {
+            if (e.target.classList.contains('drag-handle') || e.target === dragabble) {
                 initialX = e.touches[0].clientX - xOffset;
                 initialY = e.touches[0].clientY - yOffset;
 
-                if (e.target === scoreboard || e.target.classList.contains('drag-handle')) {
+                if (e.target === dragabble || e.target.classList.contains('drag-handle')) {
                     isDragging = true;
-                    scoreboard.classList.add('dragging');
+                    dragabble.classList.add('dragging');
+                    
+                    // Clear conflicting CSS positioning properties
+                    dragabble.style.right = 'auto';
+                    dragabble.style.bottom = 'auto';
+                    
                     e.preventDefault();
                 }
             }
@@ -489,8 +566,8 @@ class Connect4App {
                 xOffset = currentX;
                 yOffset = currentY;
 
-                scoreboard.style.left = xOffset + 'px';
-                scoreboard.style.top = yOffset + 'px';
+                dragabble.style.left = xOffset + 'px';
+                dragabble.style.top = yOffset + 'px';
             }
         };
 
@@ -499,18 +576,13 @@ class Connect4App {
                 initialX = currentX;
                 initialY = currentY;
                 isDragging = false;
-                scoreboard.classList.remove('dragging');
+                dragabble.classList.remove('dragging');
             }
-        };
+        };  
 
-        scoreboard.addEventListener('mousedown', dragStart);
+        dragabble.addEventListener('mousedown', dragStart);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', dragEnd);
-
-        // Touch support for mobile
-        scoreboard.addEventListener('touchstart', dragStartTouch);
-        document.addEventListener('touchmove', dragTouch);
-        document.addEventListener('touchend', dragEndTouch);
     }
 
     updateScoreboard() {
@@ -552,7 +624,6 @@ class Connect4App {
                 }
             }
         });
-
 
         // Render
         this.renderer.render(this.scene, this.camera);
@@ -619,7 +690,7 @@ async function restartGame(result) {
     }
 
     if (result != 'none' && result != 'reset') {
-        await sleep(2000); 
+        sleep(2000); 
     }
 
     app.objects.forEach(obj => {
