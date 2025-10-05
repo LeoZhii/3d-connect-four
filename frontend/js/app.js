@@ -111,7 +111,7 @@ class Connect4App {
     createObject(position, color) {
         let geometry = new THREE.SphereGeometry(0.5, 32, 32);
 
-        
+        console.log(`Creating object at position: ${position.x}, ${position.y}, ${position.z}`);
         const material = new THREE.MeshPhongMaterial({ 
             color: color,
             shininess: 100
@@ -138,30 +138,6 @@ class Connect4App {
         this.objects.push(mesh);
         
         return mesh;
-    }
-    
-    async loadObjectsFromAPI() {
-        try {
-            const response = await fetch('http://localhost:5000/api/objects');
-            const objects = await response.json();
-            
-            objects.forEach(obj => {
-                this.createObject(
-                    obj.position,
-                    obj.color
-                );
-            });
-            
-            this.updateObjectCount();
-            console.log(`Loaded ${objects.length} objects from API`);
-        } catch (error) {
-            console.warn('Could not load objects from API:', error);
-            // Create some default objects
-            this.createObject('cube', { x: 0, y: 0, z: 0 }, '#ff6b6b');
-            this.createObject('sphere', { x: 3, y: 0, z: 0 }, '#4ecdc4');
-            this.createObject('cone', { x: -3, y: 0, z: 0 }, '#45b7d1');
-            this.updateObjectCount();
-        }
     }
     
     async addObjectToAPI(objectData) {
@@ -203,7 +179,8 @@ class Connect4App {
             });
     
             // 2. The server's response body will be JSON, parse it
-            const updated_coordinates = await response.json();
+            const response_json = await response.json();
+            const updated_coordinates = response_json.coordinates;
     
             // 3. Handle non-successful HTTP status codes (e.g., 400, 500)
             if (!response.ok) {
@@ -213,15 +190,13 @@ class Connect4App {
                 // Throw an error to be caught by the outer catch block
                 throw new Error(`Move failed: ${errorMessage}`);
             }
-    
+            
+            console.log(`Calling createObject with coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
             this.createObject(updated_coordinates, color);
-            console.log(`Player ${playerId} made a move`);
+            
             this.playerOneTurn = !this.playerOneTurn;
-            console.log(`It's now player ${(this.playerOneTurn) ? 1 : 2}'s turn`);
 
-            console.log(`\nValue of playerOneTurn: ${app.playerOneTurn}`);
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
-            console.log(`Value of playerTurn: ${playerTurn} \n\n`);
         } catch (error) {
             // 5. Handle network errors (e.g., server unreachable) or errors thrown above
             console.error('An error occurred during the fetch operation:', error.message);
@@ -355,8 +330,6 @@ function toggleWireframe() {
 }
 
 function updateButtons() {
-    // console.log(`Update button: Is player one turn: ${app.playerOneTurn}`);
-
     if (app.playerOneTurn) {
         document.getElementById('playerOneButton').style.opacity = '1';
         document.getElementById('playerTwoButton').style.opacity = '0.5';
@@ -373,12 +346,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     buttons.forEach(button => {
         button.addEventListener('click', (event) => {
-            // console.log(`\nValue of playerOneTurn: ${app.playerOneTurn}`);
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
-            // console.log(`Value of playerTurn: ${playerTurn} \n\n`);
     
             if (event.target.value === playerTurn) {
-                app.playerMove().then(playerData => {
+                app.playerMove().then(() => {
                     updateButtons();
                 })
                 .catch(error => {
