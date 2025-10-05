@@ -67,13 +67,17 @@ class MCTS:
     def _simulate(self, state, player, game):
         #simulate random play until terminal
         current_player = player
-        sim_state = copy.deepcopy(state)
+                sim_state = copy.deepcopy(state)
         while not game.is_terminal(sim_state):
             moves = game.get_valid_moves(sim_state)
             move = random.choice(moves)
             sim_state = game.make_move(sim_state, move, current_player)
             current_player = game.get_opponent(current_player)
-        return game.get_result(sim_state, player)
+        result = game.get_result(sim_state, current_player)
+        if result == 0.5: return result
+        # return w/l based off of starting player 
+        if current_player != player:
+            return 0 if result == 1 else return 1 
 
     def _backpropagate(self, node, reward):
         while node:

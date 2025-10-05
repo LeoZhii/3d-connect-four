@@ -148,7 +148,7 @@ def get_opponent(current_player):
     return 1 if current_player == 2 else 2
 
 
-def get_valid_moves():
+def get_valid_moves(grid):
     zero_indices = np.argwhere(grid == 0)
 
     return [
