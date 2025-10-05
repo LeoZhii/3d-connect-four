@@ -40,7 +40,7 @@ def record_player_move(player_id):
     empty_positions = np.where(column == 0)[0]
     if len(empty_positions) == 0:
         response = {
-            'coordinates': {'x': -1, 'y': -1, 'z': -1}
+            'state': State.INVALID_MOVE
         }
         return jsonify(response), 200
 

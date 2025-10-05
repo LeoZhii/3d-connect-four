@@ -2,6 +2,7 @@ from enum import Enum
 
 
 class State(int, Enum):
+    INVALID_MOVE = -1,
     CONTINUE = 0,
     PLAYER_1_WIN = 1,
     PLAYER_2_WIN = 2,
