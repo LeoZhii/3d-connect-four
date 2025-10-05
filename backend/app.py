@@ -18,7 +18,10 @@ def record_player_move(player_id):
     if player_id != 1 and player_id != 2:
         return jsonify({'error': 'Invalid player_id'}), 400
 
-    body = request.json
+    if not request.is_json:
+        return jsonify({'error': 'Request is not json!'}), 400
+
+    body = request.get_json()
     if not body or 'coordinates_2d' not in body:
         return jsonify({'error': 'Missing coordinates_2d in request body'}), 400
 
@@ -60,4 +63,4 @@ if __name__ == '__main__':
     print("Starting Three.js Backend Server...")
     print("\nServer running at: http://localhost:5000")
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5050)
