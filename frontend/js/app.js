@@ -797,8 +797,35 @@ function applySettings() {
     closePanelModal("settings-modal");
 }
 
+function setupGameModeToggle() {
+    const gameModeSelect = document.getElementById('game-mode-select');
+    const difficultySelect = document.getElementById('difficulty-select');
+    
+    // Function to toggle difficulty select based on game mode
+    function toggleDifficultySelect() {
+        if (gameModeSelect.value === 'pvp') {
+            difficultySelect.disabled = true;
+            difficultySelect.style.opacity = '0.5';
+            difficultySelect.style.cursor = 'not-allowed';
+        } else {
+            difficultySelect.disabled = false;
+            difficultySelect.style.opacity = '1';
+            difficultySelect.style.cursor = 'pointer';
+        }
+    }
+    
+    // Set initial state
+    toggleDifficultySelect();
+    
+    // Add event listener for changes
+    gameModeSelect.addEventListener('change', toggleDifficultySelect);
+}
+
 // Initialize the application when the page loads
 window.addEventListener('DOMContentLoaded', () => {
+    // Setup game mode toggle functionality
+    setupGameModeToggle();
+    
     app = new Connect4App();
     const buttons = document.querySelectorAll('.playerButton');
 

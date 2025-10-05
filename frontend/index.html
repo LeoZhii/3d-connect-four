@@ -411,25 +411,23 @@
                 <h2>⚙️ Settings</h2>
                 <div class="settings-content">
                     <div class="setting-group">
-                        <label>🎨 Theme</label>
-                        <select id="theme-select">
-                            <option value="default">Default</option>
-                            <option value="dark">Dark Mode</option>
-                            <option value="colorful">Colorful</option>
+                        <label>Game Mode</label>
+                        <select id="game-mode-select">
+                            <option value="pvp">Player vs Player</option>
+                            <option value="pvai">Player vs AI</option>
                         </select>
                     </div>
                     
                     <div class="setting-group">
-                        <label>🔊 Sound Effects</label>
-                        <input type="checkbox" id="sound-toggle" checked>
+                        <label>AI Difficulty</label>
+                        <select id="difficulty-select">
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
                     </div>
                     
-                    <div class="setting-group">
-                        <label>📱 UI Scale</label>
-                        <input type="range" id="ui-scale" min="0.8" max="1.5" step="0.1" value="1">
-                    </div>
-                    
-                    <button class="menu-btn" onclick="applySettings()">💾 Apply Settings</button>
+                    <button class="menu-btn" onclick="applySettings()">Apply Settings</button>
                 </div>
             </div>
         </div>
