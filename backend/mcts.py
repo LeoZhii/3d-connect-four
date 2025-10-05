@@ -72,6 +72,7 @@ class MCTS:
             moves = game.get_valid_moves(sim_state)
             move = random.choice(moves)
             sim_state = game.make_move(sim_state, move, current_player)
+            current_player = game.get_opponent(current_player)
         return game.get_result(sim_state, player)
 
     def _backpropagate(self, node, reward):

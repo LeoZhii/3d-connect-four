@@ -101,7 +101,7 @@ def record_player_move(player_id):
     }
     return jsonify(response), 201
 
-# returns 0 for loss, 1 for win, 0.5 for draw in perspective of the player
+# returns 1 for win, 0.5 for draw in perspective of the player
 def get_result(x, y, z, player_id):
     elements = [0, 1, -1]
     directions = list(itertools.product(elements, repeat=3))[1:]
@@ -145,7 +145,7 @@ def is_terminal(grid):
     return terminal 
 
 def get_opponent(current_player):
-    return 1 if player == 2 else 2
+    return 1 if current_player == 2 else 2
 
 
 def get_valid_moves():
