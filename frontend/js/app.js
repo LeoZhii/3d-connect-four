@@ -373,6 +373,7 @@ window.addEventListener('DOMContentLoaded', () => {
             playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
     
             if (event.target.value === playerTurn) {
+                console.log(`${playerTurn} made a move`);
                 app.playerMove();
             }
             console.log(`Button clicked: ${event.target.textContent}`);
