@@ -144,7 +144,13 @@ def record_player_move(player_id):
 
     column = game_data.grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
- 
+    
+    if len(empty_positions) == 0:
+        return jsonify({
+        'coordinates': {'x': -1, 'y': -1, 'z': -1},
+        'state': State.INVALID_MOVE
+    }), 201
+    
     z = int(empty_positions[0])
     game_data.grid[x, y, z] = player_id
 
