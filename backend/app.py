@@ -75,17 +75,17 @@ def record_player_move(player_id):
     turn += 1
 
     state = State.CONTINUE
-    winner = check_winner(x, y, z, player_id)
-    draw = False
+    winner = get_result(x, y, z, player_id)
 
-    if winner is None:
-        draw = check_draw(grid)
-        if draw:
-            state = State.DRAW
-            game_result['state'] = State.DRAW
-    else:
-        state = winner
-        game_result['state'] = winner
+    if winner == 0.5: #draw
+        state = State.DRAW
+        game_result['state'] = State.DRAW
+    else if winner == 1: #win
+        state = player_id
+        game_result['state'] = player_id 
+    else: #loss 
+        state = get_opponent(player_id)
+        game_result['state'] = get_opponent(player_id)
 
     response = {
         'coordinates': {'x': x, 'y': z, 'z': y},
@@ -136,6 +136,9 @@ def get_result(x, y, z, player_id):
 
 def is_terminal(grid):
     return terminal 
+
+def get_opponent(current_player):
+    return 1 if player == 2 else 2
 
 
 def get_valid_moves():
