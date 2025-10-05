@@ -119,12 +119,12 @@
         #scoreboard {
             position: absolute;
             top: 20px;
-            left: calc(100% - 240px);
-            background: rgba(255, 255, 255, 0.9);
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
+            font-size: 12px;
             min-width: 200px;
             cursor: move;
             user-select: none;
@@ -145,21 +145,21 @@
             align-items: center;
             margin-bottom: 10px;
             padding: 8px;
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 5px;
         }
         
         .player-name {
             font-weight: bold;
-            color: #333;
+            color: white;
             font-size: 14px;
         }
         
         .score-value {
             font-size: 18px;
             font-weight: bold;
-            color: #555;
-            background: rgba(0, 0, 0, 0.1);
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
             padding: 4px 8px;
             border-radius: 4px;
             min-width: 30px;
@@ -167,10 +167,10 @@
         }
         
         .game-info {
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
             padding-top: 10px;
             font-size: 12px;
-            color: #666;
+            color: #ccc;
         }
         
         .game-info div {
@@ -179,12 +179,12 @@
         
         .game-info span {
             font-weight: bold;
-            color: #333;
+            color: white;
         }
 
         #info-panel {
             position: absolute;
-            bottom: 20px;
+            top: 20px;
             right: 20px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
@@ -192,6 +192,50 @@
             border-radius: 10px;
             font-size: 12px;
             max-width: 200px;
+            cursor: move;
+            user-select: none;
+        }
+        
+        #info-panel.dragging {
+            cursor: grabbing;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Center Controls */
+        #center-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .center-btn {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            min-width: 150px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .center-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .center-btn:active {
+            transform: translateY(-1px);
         }
         
         #loading {
@@ -434,25 +478,16 @@
         
         <div id="canvas-container"></div>
         
-        <div id="ui-panel">
-            <div class="drag-handle">⋮⋮ Drag to Move ⋮⋮</div>
-            <h2>Control Panel</h2>
-
-            <div class="control-group">
-                <label>Coordinates:</label>
-                <input type="text" id="coordinates" value="0,0">
-            </div>
-            
-            <button class="playerButton" id="playerOneButton" value="playerOne">➕ Player 1</button>
-            <button class="playerButton" id="playerTwoButton" value="playerTwo">➕ Player 2</button>
-            <button onclick="restartGame('reset')">🔄 Restart Game</button>
-            <button onclick="toggleWireframe()">🔲 Toggle Wireframe</button>
-            <button onclick="returnToMainMenu()">🏠 Main Menu</button>
+        <!-- Center Control Buttons -->
+        <div id="center-controls">
+            <button class="center-btn" onclick="confirmMove()">Confirm Move</button>
+            <button class="center-btn" onclick="restartGame('reset')">Restart</button>
+            <button class="center-btn" onclick="returnToMainMenu()">Main Menu</button>
         </div>
         
         <div id="scoreboard">
             <div class="drag-handle">⋮⋮ Drag to Move ⋮⋮</div>
-            <h2>🏆 Scoreboard</h2>
+            <h2>Scoreboard</h2>
             
             <div class="score-group">
                 <div class="player-score">

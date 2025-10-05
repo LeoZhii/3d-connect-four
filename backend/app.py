@@ -26,7 +26,7 @@ def reset_game(result):
     if result == 'player1' or result == 'player2':
         game_result[result + '_score'] += 1
 
-    if result != 'reset':
+    if result != 'none' and result != 'reset':
         game_result['num_games'] += 1
 
     grid = np.zeros((4, 4, 5), dtype=int)
