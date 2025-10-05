@@ -898,7 +898,7 @@ function returnToMainMenu() {
 function  setupGameModeToggle() {
     const gameModeSelect = document.getElementById('game-mode-select');
     const difficultySelect = document.getElementById('difficulty-select');
-    const playerOrderSelect = document.getElementById('player-order-select');
+    // const playerOrderSelect = document.getElementById('player-order-select');
     
     // Function to toggle difficulty select based on game mode
     function toggleDifficultySelect() {
@@ -907,17 +907,17 @@ function  setupGameModeToggle() {
             difficultySelect.style.opacity = '0.5';
             difficultySelect.style.cursor = 'not-allowed';
 
-            playerOrderSelect.disabled = true;
-            playerOrderSelect.style.opacity = '0.5';
-            playerOrderSelect.style.cursor = 'not-allowed';
+            // playerOrderSelect.disabled = true;
+            // playerOrderSelect.style.opacity = '0.5';
+            // playerOrderSelect.style.cursor = 'not-allowed';
         } else {
             difficultySelect.disabled = false;
             difficultySelect.style.opacity = '1';
             difficultySelect.style.cursor = 'pointer';
 
-            playerOrderSelect.disabled = false;
-            playerOrderSelect.style.opacity = '1';
-            playerOrderSelect.style.cursor = 'pointer';
+            // playerOrderSelect.disabled = false;
+            // playerOrderSelect.style.opacity = '1';
+            // playerOrderSelect.style.cursor = 'pointer';
         }
     }
     
@@ -947,11 +947,11 @@ function closePanelModal(modal) {
 function applySettings() {
     const gameMode = document.getElementById('game-mode-select').value;
     const gameDifficulty = document.getElementById('difficulty-select').value;
-    const playerOrder = document.getElementById('player-order-select').value;
+    // const playerOrder = document.getElementById('player-order-select').value;
     
     app.gameMode = gameMode;
     app.gameDifficulty = gameDifficulty;
-    app.playerOrder = playerOrder;
+    // app.playerOrder = playerOrder;
 
     closePanelModal("settings-modal");
 }
