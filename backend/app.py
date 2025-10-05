@@ -10,6 +10,7 @@ CORS(app)  # Enable CORS for frontend communication
 grid = np.zeros((4, 4, 5), dtype=int)
 turn = 1
 moves = []
+terminal = False #is the game over
 
 game_result = {
     'state': None
@@ -92,10 +93,15 @@ def record_player_move(player_id):
     }
     return jsonify(response), 201
 
-
-def check_winner(x, y, z, player_id):
+# returns 0 for loss, 1 for win, 0.5 for draw in perspective of the player
+def get_result(x, y, z, player_id):
     elements = [0, 1, -1]
     directions = list(itertools.product(elements, repeat=3))[1:]
+
+    # check for draw
+    if not np.any(grid==0):
+        terminal = True
+        return 0.5
 
     for dx, dy, dz in directions:
         count = 1
@@ -121,13 +127,15 @@ def check_winner(x, y, z, player_id):
                 break
 
         if count >= 4:
-            return player_id
+            terminal = True 
+            return 1 #win 
 
-    return None
+    terminal = True 
+    return 0 #loss
 
 
-def check_draw(grid):
-    return not np.any(grid == 0)
+def is_terminal(grid):
+    return terminal 
 
 
 def get_valid_moves():
