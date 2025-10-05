@@ -11,10 +11,24 @@ grid = np.zeros((4, 4, 5), dtype=int)
 turn = 1
 moves = []
 
+game_result = {
+    'state': None
+}
+
+
+@app.route('/v1/api/game/reset', methods=['POST'])
+def reset_game():
+    global grid, moves, game_result
+
+    grid = np.zeros((4, 4, 5), dtype=int)
+    moves = []
+
+    return jsonify(game_result), 200
+
 
 @app.route('/v1/api/players/<int:player_id>/moves', methods=['POST'])
 def record_player_move(player_id):
-    global turn, grid, moves
+    global turn, grid, moves, game_result
 
     if player_id != 1 and player_id != 2:
         return jsonify({'error': 'Invalid player_id'}), 400
@@ -35,9 +49,9 @@ def record_player_move(player_id):
 
     if not (0 <= x < 4 and 0 <= y < 4):
         return jsonify({
-        'coordinates': {'x': -1, 'y': -1, 'z': -1},
-        'state': State.INVALID_MOVE
-    }), 201
+            'coordinates': {'x': -1, 'y': -1, 'z': -1},
+            'state': State.INVALID_MOVE
+        }), 201
 
     column = grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
@@ -67,8 +81,10 @@ def record_player_move(player_id):
         draw = check_draw(grid)
         if draw:
             state = State.DRAW
+            game_result['state'] = State.DRAW
     else:
         state = winner
+        game_result['state'] = winner
 
     response = {
         'coordinates': {'x': x, 'y': z, 'z': y},
