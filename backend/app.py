@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import numpy as np
-import json
+import itertools
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
@@ -54,12 +54,48 @@ def record_player_move(player_id):
     moves.append(move)
     turn += 1
 
-    # TODO: Check for winner
+    # TODO: check for draw
+
+    winner = check_winner(x, y, z, player_id)
 
     response = {
-        'coordinates': [x, y, z]
+        'coordinates': [x, y, z],
+        'winner': winner
     }
     return jsonify(response), 201
+
+
+def check_winner(x, y, z, player_id):
+    elements = [0, 1, -1]
+    directions = list(itertools.product(elements, repeat=3))[1:]
+
+    for dx, dy, dz in directions:
+        count = 1
+
+        for i in range(1, 4):
+            nx, ny, nz = x + dx*i, y + dy*i, z + dz*i
+            if 0 <= nx < 4 and 0 <= ny < 4 and 0 <= nz < 5:
+                if grid[nx, ny, nz] == player_id:
+                    count += 1
+                else:
+                    break
+            else:
+                break
+
+        for i in range(1, 4):
+            nx, ny, nz = x - dx*i, y - dy*i, z - dz*i
+            if 0 <= nx < 4 and 0 <= ny < 4 and 0 <= nz < 5:
+                if grid[nx, ny, nz] == player_id:
+                    count += 1
+                else:
+                    break
+            else:
+                break
+
+        if count >= 4:
+            return player_id
+
+    return None
 
 
 if __name__ == '__main__':
