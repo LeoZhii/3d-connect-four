@@ -62,6 +62,7 @@ def record_player_move(player_id):
             'state': State.INVALID_MOVE
         }), 201
 
+    # checks if column is full 
     column = grid[x, y, :]
     empty_positions = np.where(column == 0)[0]
     if len(empty_positions) == 0:
@@ -149,12 +150,18 @@ def get_opponent(current_player):
 
 
 def get_valid_moves(grid):
+    # to be valid, coordinate must be empty and apease gravity
     zero_indices = np.argwhere(grid == 0)
 
-    return [
-        {'x': int(idx[0]), 'y': int(idx[2]), 'z': int(idx[1])}
-        for idx in zero_indices
-    ]
+    valid_moves = []
+    for idx in zero_indices:
+        x, y, z = idx[0], idx[1], idx[2]
+
+        # check if z is 0 OR space directly below is NOT empty to be valid
+        if z == 0 or grid[x, y, z-1] != 0:
+            valid_moves.append({'x': int(x), 'y': int(y), 'z': int(z)})
+        
+    return valid_moves
 
 
 if __name__ == '__main__':
