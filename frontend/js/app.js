@@ -23,7 +23,7 @@ class Connect4App {
         this.player1Score = 0;
         this.player2Score = 0;
         this.gamesPlayed = 0;
-        this.inSession = true;
+        this.inSession = false;
         this.gameMode = 'pvp';
         this.gameDifficulty = 'easy';
 
@@ -161,11 +161,11 @@ class Connect4App {
         return mesh;
     }
 
-    async playerMove() {
+    async playerMove(x, z) {
         const color = (app.playerOneTurn) ? '#FF0000' : '#FFFF00';
     
-        const coordinates = document.getElementById('coordinates').value.split(',');
-        const position = { x: coordinates[0], y: coordinates[1] };
+        // const coordinates = document.getElementById('coordinates').value.split(',');
+        // const position = { x: coordinates[0], y: coordinates[1] };
         
         const playerId = (this.playerOneTurn) ? 1 : 2;
 
@@ -176,7 +176,8 @@ class Connect4App {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    "coordinates_2d": [position.x, position.y]
+                    // "coordinates_2d": [position.x, position.y]
+                    "coordinates_2d": [x, z]
                 }),
             });
     
@@ -193,9 +194,13 @@ class Connect4App {
             const state = response_json.state;
             
             console.log(`State: ${state}`);
-            console.log(`Calling createObject with coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
-            updated_coordinates.y += 0.5;
-
+            console.log(`Callling createObject with coordinates: ${x}, ${z}`);
+            console.log(`Calling createObject with updated coordinates: ${updated_coordinates.x}, ${updated_coordinates.y}, ${updated_coordinates.z}`);
+            
+            updated_coordinates.x *= 1.5;
+            updated_coordinates.y *= 1.5;
+            updated_coordinates.z *= 1.5;
+            
             switch (state) {
                 case Connect4App.STATE.INVALID_MOVE: {
                     this.displayPopup({
@@ -248,9 +253,7 @@ class Connect4App {
                     this.playerOneTurn = !this.playerOneTurn;
                 }
             }
-            
-            playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
-            
+                        
         } catch (error) {
             // 5. Handle network errors (e.g., server unreachable) or errors thrown above
             console.error('An error occurred during the fetch operation:', error.message);
@@ -297,7 +300,7 @@ class Connect4App {
                     popup.parentNode.removeChild(popup);
                 }
             }, 300);
-        }, 2000);
+        }, 500);
     }
 
     // Add interactive gridlines
@@ -348,9 +351,29 @@ class Connect4App {
             this.updateColumnHighlight();
         });
 
-        window.addEventListener('click', () => {
-            if (this.highlightedColumn) {
-                // this.dropPiece(this.highlightedColumn.x, this.highlightedColumn.z);
+        window.addEventListener('click', (event) => {
+            // Ignore clicks on UI elements
+            if (event.target.closest('#ui-panel') || 
+                event.target.closest('#scoreboard') || 
+                event.target.closest('#main-menu') ||
+                event.target.closest('#center-controls') ||
+                event.target.closest('#info-panel')) {
+                return;
+            }
+
+            if (this.highlightedColumn && this.inSession) {
+
+                const cellData = this.gridCells.find(c => c.mesh === this.highlightedColumn);
+
+                if (cellData) {
+                    console.log(`Clicked column at matrix position: (${cellData.x}, ${cellData.z})`);
+                }
+                this.playerMove(this.highlightedColumn.x, this.highlightedColumn.z).then(() => {
+                    // updateButtons();
+                })
+                .catch(error => {
+                    console.error("Error occurred while making player move:", error);
+                });
             }
         });
     }
@@ -364,6 +387,9 @@ class Connect4App {
             if (cell !== this.highlightedColumn) {
                 this.highlightedColumn = cell;
                 if (!this.highlightMesh) {
+                    const color = app.playerOneTurn ? '#ff0000' : '#ffff00';
+                    this.highlightMaterial.color.set(color);
+
                     this.highlightMesh = new THREE.Mesh(selectedMesh.geometry.clone(), this.highlightMaterial);
                     this.scene.add(this.highlightMesh);
                 }
@@ -379,12 +405,6 @@ class Connect4App {
     }
 
     setupEventListeners() {
-        document.getElementById('coordinates').addEventListener('input', (e) => {
-            this.updatePositionPreview(e.target.value, 'coordinates');
-        });
-
-        // Make UI panel draggable
-        this.setupDraggablePanel();
         
         // Initialize scoreboard
         this.updateScoreboard();
@@ -393,127 +413,10 @@ class Connect4App {
         setTimeout(() => {
             this.setupDraggableScoreboard();
         }, 100);
+                
     }
     
-    setupGameModeToggle() {
-        const gameModeSelect = document.getElementById('game-mode-select');
-        const difficultySelect = document.getElementById('difficulty-select');
-        
-        // Function to toggle difficulty select based on game mode
-        function toggleDifficultySelect() {
-            if (gameModeSelect.value === 'pvp') {
-                difficultySelect.disabled = true;
-                difficultySelect.style.opacity = '0.5';
-                difficultySelect.style.cursor = 'not-allowed';
-
-            } else {
-                difficultySelect.disabled = false;
-                difficultySelect.style.opacity = '1';
-                difficultySelect.style.cursor = 'pointer';
-            }
-        }
-        
-        // Set initial state
-        toggleDifficultySelect();
-        
-        // Add event listener for changes
-        gameModeSelect.addEventListener('change', toggleDifficultySelect);
-    }
-
-    setupDraggablePanel() {
-        const panel = document.getElementById('ui-panel');
-        let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-        let xOffset = 0;
-        let yOffset = 0;
-
-        const dragStart = (e) => {
-            // Only start dragging if clicking on the drag handle or the panel itself
-            if (e.target.classList.contains('drag-handle') || e.target === panel) {
-                initialX = e.clientX - xOffset;
-                initialY = e.clientY - yOffset;
-
-                if (e.target === panel || e.target.classList.contains('drag-handle')) {
-                    isDragging = true;
-                    panel.classList.add('dragging');
-                    e.preventDefault();
-                }
-            }
-        };
-
-        const drag = (e) => {
-            if (isDragging) {
-                e.preventDefault();
-                currentX = e.clientX - initialX;
-                currentY = e.clientY - initialY;
-
-                xOffset = currentX;
-                yOffset = currentY;
-
-                // No constraints - allow dragging beyond viewport edges
-                panel.style.left = xOffset + 'px';
-                panel.style.top = yOffset + 'px';
-            }
-        };
-
-        const dragEnd = (e) => {
-            if (isDragging) {
-                initialX = currentX;
-                initialY = currentY;
-                isDragging = false;
-                panel.classList.remove('dragging');
-            }
-        };
-
-        const dragStartTouch = (e) => {
-            if (e.target.classList.contains('drag-handle') || e.target === panel) {
-                initialX = e.touches[0].clientX - xOffset;
-                initialY = e.touches[0].clientY - yOffset;
-
-                if (e.target === panel || e.target.classList.contains('drag-handle')) {
-                    isDragging = true;
-                    panel.classList.add('dragging');
-                    e.preventDefault();
-                }
-            }
-        };
-
-        const dragTouch = (e) => {
-            if (isDragging) {
-                e.preventDefault();
-                currentX = e.touches[0].clientX - initialX;
-                currentY = e.touches[0].clientY - initialY;
-
-                xOffset = currentX;
-                yOffset = currentY;
-
-                // No constraints - allow dragging beyond viewport edges
-                panel.style.left = xOffset + 'px';
-                panel.style.top = yOffset + 'px';
-            }
-        };
-
-        const dragEndTouch = (e) => {
-            if (isDragging) {
-                initialX = currentX;
-                initialY = currentY;
-                isDragging = false;
-                panel.classList.remove('dragging');
-            }
-        };
-
-        panel.addEventListener('mousedown', dragStart);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', dragEnd);
-
-        // Touch support for mobile
-        panel.addEventListener('touchstart', dragStartTouch);
-        document.addEventListener('touchmove', dragTouch);
-        document.addEventListener('touchend', dragEndTouch);
-    }
+  
 
     setupDraggableScoreboard() {
         const scoreboard = document.getElementById('scoreboard');
@@ -708,13 +611,16 @@ let app;
 async function restartGame(result) {
     app.inSession = false;
 
-    app.displayPopup({
-        message: '⏳ Restarting Game...',
-        color: '#FFD580'
-    });
+    if (result === 'reset') {
+        app.displayPopup({
+            message: '⏳ Restarting Game...',
+            color: '#FFD580'
+        });
+    }
 
-    document.getElementById('playerOneButton').style.opacity = '0.5';
-    document.getElementById('playerTwoButton').style.opacity = '0.5';
+    if (result != 'none' && result != 'reset') {
+        await sleep(2000); 
+    }
 
     app.objects.forEach(obj => {
         app.scene.remove(obj);
@@ -723,8 +629,6 @@ async function restartGame(result) {
     });
     app.objects = [];
     app.updateObjectCount();
-
-    await sleep(2000); 
 
     try {
         const response = await fetch(`http://localhost:5000/v1/api/game/${result}/reset`, {
@@ -750,7 +654,7 @@ async function restartGame(result) {
 
         app.playerOneTurn = true;
         app.inSession = true;
-        updateButtons();
+        // updateButtons();
 
     } catch (error) {
         // 5. Handle network errors (e.g., server unreachable) or errors thrown above
@@ -788,6 +692,8 @@ function startGame() {
     setTimeout(() => {
         document.getElementById('loading').style.display = 'none';
     }, 1000);
+
+    restartGame('none');
 }
 
 function returnToMainMenu() {
@@ -796,6 +702,31 @@ function returnToMainMenu() {
     if (app) {
         restartGame('reset');
     }
+}
+
+function  setupGameModeToggle() {
+    const gameModeSelect = document.getElementById('game-mode-select');
+    const difficultySelect = document.getElementById('difficulty-select');
+    
+    // Function to toggle difficulty select based on game mode
+    function toggleDifficultySelect() {
+        if (gameModeSelect.value === 'pvp') {
+            difficultySelect.disabled = true;
+            difficultySelect.style.opacity = '0.5';
+            difficultySelect.style.cursor = 'not-allowed';
+
+        } else {
+            difficultySelect.disabled = false;
+            difficultySelect.style.opacity = '1';
+            difficultySelect.style.cursor = 'pointer';
+        }
+    }
+    
+    // Set initial state
+    toggleDifficultySelect();
+    
+    // Add event listener for changes
+    gameModeSelect.addEventListener('change', toggleDifficultySelect);
 }
 
 function showPanelModal(panel_modal) {
@@ -832,22 +763,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     setupGameModeToggle();
 
-    buttons.forEach(button => {
-        button.addEventListener('click', (event) => {
-            playerTurn = (app.playerOneTurn) ? "playerOne" : "playerTwo";
-    
-            if (event.target.value === playerTurn && app.inSession) {
-                app.playerMove().then(() => {
-                    updateButtons();
-                })
-                .catch(error => {
-                    console.error("3. Error occurred during API call:", error);
-                });
-            }
-        });
-    });
-
-    updateButtons();
+    // updateButtons();
+    restartGame('none');
 
 });
 
