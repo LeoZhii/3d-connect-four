@@ -6,7 +6,7 @@ import json
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
-grid = np.zeros(4, 4, 5)
+grid = np.zeros((4, 4, 5), dtype=int)
 turn = 1
 moves = []
 
