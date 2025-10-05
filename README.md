@@ -163,5 +163,3 @@ MIT License - feel free to use and modify as needed!
 5. Submit a pull request
 
 ---
-
-Enjoy building amazing 3D applications! 🚀
