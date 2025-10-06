@@ -83,6 +83,13 @@ class Connect4App {
         this.controls.minDistance = distance; // lock distance
         this.controls.maxDistance = distance; // lock distance
 
+        // Configure mouse buttons
+        this.controls.mouseButtons = {
+            LEFT: THREE.MOUSE.ROTATE,    // Left click for rotation
+            MIDDLE: THREE.MOUSE.DOLLY,   // Middle mouse for zoom
+            RIGHT: THREE.MOUSE.NONE      // Right click disabled (we'll use it for column selection)
+        };
+
         this.controls.update();
 
 
@@ -540,7 +547,7 @@ class Connect4App {
             this.updateColumnHighlight();
         });
 
-        window.addEventListener('click', (event) => {
+        window.addEventListener('contextmenu', (event) => {
             // Ignore clicks on UI elements
             if (event.target.closest('#ui-panel') || 
                 event.target.closest('#scoreboard') || 
@@ -550,6 +557,9 @@ class Connect4App {
                 return;
             }
 
+            // Prevent default context menu
+            event.preventDefault();
+
             if (this.highlightedColumn && this.inSession) {
                 if (!app.playerOneTurn && app.gameMode === 'pvai') {
                     return;
@@ -558,7 +568,7 @@ class Connect4App {
                 const cellData = this.gridCells.find(c => c.mesh === this.highlightedColumn);
 
                 if (cellData) {
-                    console.log(`Clicked column at matrix position: (${cellData.x}, ${cellData.z})`);
+                    console.log(`Right-clicked column at matrix position: (${cellData.x}, ${cellData.z})`);
                 }
                 this.playerMove(this.highlightedColumn.x, this.highlightedColumn.z).then(() => {
                     // updateButtons();
@@ -1012,6 +1022,14 @@ function showPanelModal(panel_modal) {
 
 function closePanelModal(modal) {
     document.getElementById(modal).style.display = 'none';
+}
+
+function closeInstructions() {
+    closePanelModal("instructions-modal");
+}
+
+function closeSettings() {
+    closePanelModal("settings-modal");
 }
 
 function applySettings() {
